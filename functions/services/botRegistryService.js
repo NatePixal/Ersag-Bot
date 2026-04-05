@@ -14,6 +14,22 @@ const registerBot = async (botToken, leaderId) => {
 
     const webhookUuid = crypto.randomUUID();
     
+    // Auto web-hook binding natively
+    const env = require('../config/env');
+    const functionsUrl = env.TELEGRAM_WEBHOOK_URL || 'https://us-central1-YOURPROJECT.cloudfunctions.net';
+    const cleanUrl = functionsUrl.endsWith('/') ? functionsUrl.slice(0, -1) : functionsUrl;
+    
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook?url=${cleanUrl}/webhook/${botToken}`);
+        if (!response.ok) {
+            logger.error(`Native SetWebhook Failed for ${botToken}`);
+        } else {
+            logger.info(`Successfully bound native webhook for ${botToken}`);
+        }
+    } catch (err) {
+        logger.error(`Natively hooking webhook errored`, err);
+    }
+    
     const botData = {
         bot_token: botToken,
         leader_id: leaderId,

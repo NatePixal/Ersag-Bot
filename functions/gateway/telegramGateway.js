@@ -18,8 +18,8 @@ const handleTelegramUpdate = async (req, res) => {
 
         logger.info(`[Gateway OK] Received Telegram update for bot: ${botToken.substring(0, 10)}...`);
 
-        // Forward to router - Note: Router now handles sending telegram API responses directly asynchronously
-        router.routeUpdate(update, botToken).catch(err => logger.error('Router execution error:', err));
+        // Await router so Firebase doesn't kill the function asynchronously before LLM resolves
+        await router.routeUpdate(update, botToken).catch(err => logger.error('Router execution error:', err));
 
         // Acknowledge receipt to Telegram instantly to prevent retries
         res.status(200).send('OK');

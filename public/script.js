@@ -18,6 +18,20 @@ function buildRegUrl(sid) {
     return 'https://www.ersagglobal.uz/account.asp?mod=myaccount&sub=edit&action=register&p=1&red=&sponsor=' + encodeURIComponent(sid);
 }
 
+// ──────────── SECURE TENANT FETCH ────────────
+async function secureApiFetch(url) {
+    const tg = window.Telegram?.WebApp;
+    const initData = tg?.initData || '';
+    const tenantId = urlParams.get('tenant') || ''; // Uses tenant UUID safely
+
+    return fetch(url, {
+        headers: {
+            'Authorization': `tma ${initData}`,
+            'x-tenant-id': tenantId
+        }
+    });
+}
+
 // ──────────── STATE ────────────
 let currentLang    = 'uz';
 let globalProducts = [];
@@ -137,7 +151,7 @@ async function loadDashboard() {
     }
 
     try {
-        const res  = await fetch(
+        const res  = await secureApiFetch(
             PENDING_LEADS_API + '?leader_id=' + encodeURIComponent(SPONSOR_PARAM) +
             '&admin_secret=' + encodeURIComponent(urlSecret)
         );
@@ -279,7 +293,7 @@ function cleanCatStr(str) {
 // ──────────── MULTI-TENANT LEADER CONFIG ────────────
 async function loadLeaderConfig() {
     try {
-        const res = await fetch(LEADER_CONFIG_API + '?sponsor=' + encodeURIComponent(SPONSOR_PARAM));
+        const res = await secureApiFetch(LEADER_CONFIG_API + '?sponsor=' + encodeURIComponent(SPONSOR_PARAM));
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const cfg = await res.json();
         if (cfg && cfg.sponsor_id) {
@@ -335,7 +349,7 @@ async function loadProducts() {
     errorEl.classList.add('hidden');
 
     try {
-        const res = await fetch(CATALOG_API);
+        const res = await secureApiFetch(CATALOG_API);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Bad format');
