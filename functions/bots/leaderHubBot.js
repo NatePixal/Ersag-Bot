@@ -16,37 +16,22 @@ const run = async (update, botToken) => {
     const text = message.text || '';
     const leaderId = String(message.from.id);
 
-    if (text === 'Dashboard') {
+    if (text === '🎛️ Boshqaruv Paneli' || text === '/start') {
         const replyMarkup = {
-            inline_keyboard: [[{text: "Open CRM Dashboard", web_app: {url: "https://your-firebase-project.web.app/"}}]]
+            inline_keyboard: [[{text: "⚡ Control Panel (Web)", web_app: {url: "https://ersag-ai-bot.web.app/leader.html"}}]]
         };
-        await telegramApi.sendMessage(botToken, chatId, "Access your CRM Dashboard mini app:", replyMarkup);
-
-    } else if (text === 'Mening leadlarim') {
-        const pendingLeads = await leadService.getPendingLeads(leaderId);
-        if (pendingLeads.length > 0) {
-            const csvData = buildLeadsCsv(pendingLeads);
-            await telegramApi.sendDocument(botToken, chatId, csvData, `leads_${leaderId}.csv`);
-        } else {
-            await telegramApi.sendMessage(botToken, chatId, "Hozircha yangi leadlar yo'q.");
-        }
-
+        await telegramApi.sendMessage(botToken, chatId, "Sotuvchi boshqaruv paneliga xush kelibsiz. Tugmani bosing:", replyMarkup);
     } else if (text === 'Admin bilan boglanish') {
         await telegramApi.sendMessage(botToken, chatId, "Admin: @MSU_Berdibekov");
-
-    } else if (text === 'AI Helper' || text === 'Post yozish' || text === 'Lessons / Obunam') {
-        // These can be extended later or trigger the AI
-        await telegramApi.sendMessage(botToken, chatId, `Tanlangan menyu: ${text}. Tejz kunda ishga tushadi.`);
     } else {
         const replyMarkup = {
             keyboard: [
-                [{text: "Dashboard"}, {text: "Mening leadlarim"}],
-                [{text: "AI Helper"}, {text: "Post yozish"}],
-                [{text: "Lessons / Obunam"}, {text: "Admin bilan boglanish"}]
+                [{text: "🎛️ Boshqaruv Paneli"}],
+                [{text: "Admin bilan boglanish"}]
             ],
             resize_keyboard: true
         };
-        await telegramApi.sendMessage(botToken, chatId, "Asosiy menyuga xush kelibsiz. Tanlang:", replyMarkup);
+        await telegramApi.sendMessage(botToken, chatId, "Platformaga kiring:", replyMarkup);
     }
 };
 

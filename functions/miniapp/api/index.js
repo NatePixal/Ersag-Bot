@@ -19,13 +19,16 @@ router.use(cors({ origin: true }));
 router.use(rateLimit({ windowMs: 60000, max: 30 })); // max 30 hits per minute
 
 // Apply required security middlewares globally for /api
-router.use(tenantResolver);
 router.use(telegramAuth);
 
-// Mount the two distinct apps
-router.use('/customer', customerApi);
+// Introduce the native onboarding routes that DO NOT require an active Tenant
+const onboardingApi = require('./onboardingApi');
+router.use('/base', onboardingApi);
+
+// Mount the two distinct apps locked securely behind the Tenant Resolver
+router.use('/customer', tenantResolver, customerApi);
 
 // Mount the strictly verified leader endpoints, adding strict Audit Logging
-router.use('/leader', leaderAuth, auditLogger, leaderApi);
+router.use('/leader', tenantResolver, leaderAuth, auditLogger, leaderApi);
 
 module.exports = router;

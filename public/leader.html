@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sotuvchi Boshqaruvi</title>
+    <!-- Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f3f4f6; padding-bottom: 80px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .nav-btn.active { color: #047857; font-weight: bold; }
+        .nav-btn { color: #9ca3af; transition: color 0.2s; }
+        .pattern-bg { background-image: radial-gradient(#374151 1px, transparent 1px); background-size: 20px 20px; }
+    </style>
+</head>
+<body class="font-sans text-gray-800">
+
+    <div id="global-loader" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-emerald-600"></div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="hidden max-w-lg mx-auto bg-white min-h-screen relative shadow-lg">
+
+        <header class="bg-emerald-600 text-white p-4 sticky top-0 z-30 shadow-md flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold">Control Panel</h1>
+                <p id="profile-status" class="text-xs text-emerald-100">Tekshirilmoqda...</p>
+            </div>
+        </header>
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content bg-gray-50 min-h-screen">
+            <div id="dashboard-requires-onboard" class="hidden p-5">
+                 <div class="text-center py-10">
+                     <span class="text-4xl">📊</span>
+                     <p class="text-gray-400 mt-2 text-sm">Oldin botni sozlang</p>
+                     <button onclick="switchTab('settings')" class="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold">Sozlamalarga o'tish</button>
+                 </div>
+            </div>
+            
+            <div id="dashboard-content" class="hidden p-5">
+                <div class="bg-gray-800 text-white rounded-2xl p-5 mb-5 shadow-lg flex justify-between items-center pattern-bg">
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase tracking-widest font-bold">AI Tarifi</p>
+                        <p id="quota-status" class="text-2xl font-bold mt-1">20% <span class="text-xs text-gray-400 font-normal">chegirma</span></p>
+                    </div>
+                    <button onclick="switchTab('billing')" class="bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold px-3 py-2 rounded-lg">To'lov qilish</button>
+                </div>
+                
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-gray-800 text-sm">Yangi Mijozlar (Leadlar)</h3>
+                    <button onclick="fetchLeads()" class="text-emerald-600 text-xs font-bold">Yangilash</button>
+                </div>
+                
+                <div id="leads-container" class="space-y-3">
+                    <p class="text-center text-xs text-gray-400 py-6">Mijozlar yuklanmoqda...</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- TAB 2: BILLING -->
+        <section id="tab-billing" class="tab-content p-5">
+            <h2 class="font-bold text-gray-800 text-lg mb-1">Balansni To'ldirish</h2>
+            <p class="text-xs text-gray-500 mb-6">AI yordamchisi va lead xizmatlari uchun obunani yangilash</p>
+            
+            <div class="bg-white border-2 border-emerald-500 rounded-2xl p-5 mb-4 relative overflow-hidden shadow-sm">
+                <div class="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg">PRO</div>
+                <h3 class="font-bold text-gray-800">Premium To'plam</h3>
+                <p class="text-xs text-gray-500 mt-1">Cheksiz mijozlar axborotlari (1 Oy)</p>
+                
+                <div class="mt-4 space-y-2">
+                    <a href="https://app.paynet.uz/qr-online/00020101021140440012qr-online.uz01186r0AQHPJHMYyoRFazt0202115204531153038605802UZ5910AO'PAYNET'6008Tashkent610610002164280002uz0106PAYNET0208Toshkent80520012qr-online.uz03097120207070419marketing@paynet.uz6304BA67" target="_blank" class="block text-center bg-[#00A95D] text-white flex gap-2 w-full justify-center items-center py-3 rounded-xl font-bold text-sm">💳 Paynet orqali To'lash</a>
+                    <button onclick="document.getElementById('card-details').classList.toggle('hidden')" class="w-full block text-center bg-gray-100 text-gray-800 py-3 rounded-xl font-bold text-sm">🏦 Karta orqali To'lash</button>
+                    <!-- Missing action trigger logic here, it strictly happens on the TG chat flow for now since we haven't ported the full receipt upload here -->
+                </div>
+                
+                <div id="card-details" class="hidden mt-3 bg-gray-50 rounded-lg p-3 text-center border border-gray-200">
+                    <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Qabul Qiluvchi Karta</p>
+                    <p class="font-mono font-bold text-gray-800 mb-2 tracking-widest text-lg">8600 0000 0000 0000</p>
+                    <p class="text-xs text-emerald-600 font-bold bg-emerald-50 p-2 rounded-lg">To'lov qilinganidan so'ng telegram botiga tushing va "Skrinshot" ni yuklang.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: LESSONS -->
+        <section id="tab-lessons" class="tab-content p-5">
+            <h2 class="font-bold text-lg mb-4">Biznes Maktabi</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="aspect-video bg-gray-800 rounded-xl mb-3 overflow-hidden relative flex items-center justify-center text-gray-400">
+                         <span class="text-5xl opacity-50">▶️</span>
+                    </div>
+                    <h3 class="font-bold text-sm text-gray-800">Ersag imkoniyatlari</h3>
+                    <p class="text-xs text-gray-500 mt-1">Platformadan samarali foydalanish va daromad sirlari.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SETTINGS / ONBOARDING -->
+        <section id="tab-settings" class="tab-content p-5 pb-24 active">
+            
+            <div id="onboard-view" class="hidden animate-fade-in">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                    <h2 class="text-amber-800 font-bold mb-1">Xush kelibsiz!</h2>
+                    <p class="text-xs text-amber-700">Shaxsiy Ersag botingizni muvaffaqiyatli ulash uchun quyidagi maydonlarni to'ldiring.</p>
+                </div>
+                
+                <form id="onboard-form" class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1">Bot Token (@BotFather)</label>
+                        <input type="text" id="ob-bot-token" required class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="e.g. 123456:ABC-DEF1234ghIkl">
+                        <p class="mt-1 text-[9px] text-emerald-600">BotFather orqasidan berilgan uzoq API Token</p>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1">Ersag Sponsor ID</label>
+                        <input type="text" id="ob-sponsor-id" required class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="e.g. L5422685">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1">VIP Group Username (Majburiy emas)</label>
+                        <input type="text" id="ob-vip-group" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="@MyErsagGroup">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1">Telefon Raqam</label>
+                        <input type="text" id="ob-phone" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="+998901234567">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 transition-colors text-white font-bold rounded-xl py-3.5 mt-4 shadow-sm flex items-center justify-center">
+                        <span id="ob-btn-text">Birlashtirish va Qidirish 🚀</span>
+                        <div id="ob-spinner" class="hidden ml-2 animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                    </button>
+                    <p id="ob-error" class="text-red-500 text-xs text-center mt-2 hidden"></p>
+                </form>
+            </div>
+
+            <div id="profile-view" class="hidden animate-fade-in">
+                 <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 flex items-center gap-3">
+                     <div class="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">⚡</span>
+                     </div>
+                     <div>
+                        <h2 class="text-emerald-800 font-bold text-sm mb-0">Botingiz Faol</h2>
+                        <span class="text-[10px] text-emerald-600 px-2 rounded-full border border-emerald-200">Status: Active</span>
+                     </div>
+                 </div>
+                 
+                 <div class="bg-white border border-gray-100 rounded-xl p-4 space-y-3 shadow-sm">
+                     <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Sponsor ID</p>
+                        <p id="cfg-sponsor" class="font-mono text-sm font-bold text-gray-800">...</p>
+                     </div>
+                     <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">VIP Group</p>
+                        <p id="cfg-vip" class="text-sm font-bold text-gray-800">...</p>
+                     </div>
+                     <div class="flex justify-between items-center">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Telefon</p>
+                        <p id="cfg-phone" class="text-sm font-bold text-gray-800">...</p>
+                     </div>
+                 </div>
+            </div>
+            
+        </section>
+
+        <!-- BOTTOM NAV -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center h-16 w-full max-w-lg mx-auto z-40">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn flex flex-col items-center justify-center w-full h-full gap-1">
+                <span class="text-xl leading-none">📊</span>
+                <span class="text-[10px]">Dashboard</span>
+            </button>
+            <button onclick="switchTab('billing')" id="nav-billing" class="nav-btn flex flex-col items-center justify-center w-full h-full gap-1">
+                <span class="text-xl leading-none">💳</span>
+                <span class="text-[10px]">To'lov</span>
+            </button>
+            <button onclick="switchTab('lessons')" id="nav-lessons" class="nav-btn flex flex-col items-center justify-center w-full h-full gap-1">
+                <span class="text-xl leading-none">📚</span>
+                <span class="text-[10px]">Darslar</span>
+            </button>
+            <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn active flex flex-col items-center justify-center w-full h-full gap-1">
+                <span class="text-xl leading-none">⚙️</span>
+                <span class="text-[10px]">Profil</span>
+            </button>
+        </nav>
+
+        <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-4 py-2 rounded-full shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50"></div>
+    </div>
+
+    <script src="/leader_script.js"></script>
+</body>
+</html>
