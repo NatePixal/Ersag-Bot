@@ -33,11 +33,18 @@ const routeUpdate = async (update, botToken) => {
         // Intercept Language and /start global commands
         if (rawText.startsWith('/start')) {
             const parts = rawText.split(' ');
-            let referral = null;
             if (parts.length > 1) {
-                referral = parts[1]; // e.g. L5422685
+                const referral = parts[1]; // e.g. L5422685
                 logger.info(`[Referral Catch] User ${telegramUserId} used referral ${referral}`);
-                // In full implementation, store the referral link to associate their profile
+                // Store the referral so we can track which leader brought this customer
+                try {
+                    const { db } = require('../config/db');
+                    await db.collection('customer_referrals').doc(String(telegramUserId)).set({
+                        referral_code: referral,
+                        bot_token: botToken,
+                        joined_at: new Date().toISOString()
+                    }, { merge: true });
+                } catch (e) { logger.error('Failed to store referral', e); }
             }
             
             // Send language selection
@@ -49,6 +56,11 @@ const routeUpdate = async (update, botToken) => {
             await telegramApi.sendMessage(botToken, telegramUserId, "Assalomu alaykum! / Здравствуйте!\n\nTilni tanlang: / Выберите язык:", langMarkup);
             logger.info(`[Route: System] Requested language choice from ${telegramUserId}`);
             return;
+        }
+
+        // Intercept billing keywords
+        if (rawText === 'Top up balance' || rawText === '/billing') {
+            return require('../bots/billingBot').run(update, botToken);
         }
 
         // Quota check
@@ -68,9 +80,9 @@ const routeUpdate = async (update, botToken) => {
         if (role === 'customer') {
             if (!hasQuota) {
                 intent = 'fallback'; // Bypass AI entirely
-            } else if (text.includes('qimmat') || text.includes('qanaqa')) {
+            } else if (text.includes('qimmat') || text.includes('qanaqa') || text.includes('дорого') || text.includes('expensive')) {
                 intent = 'hesitant';
-            } else if (text.includes('yordam') || text.includes('savol')) {
+            } else if (text.includes('yordam') || text.includes('savol') || text.includes('помощь') || text.includes('вопрос') || text.includes('narx') || text.includes('цена') || text.includes('dostavka') || text.includes('доставка')) {
                 intent = 'help';
             }
         }
