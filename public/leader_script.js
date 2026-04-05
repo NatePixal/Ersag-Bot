@@ -177,6 +177,7 @@ document.getElementById('onboard-form').addEventListener('submit', async (e) => 
     const payload = {
         leaderName:  document.getElementById('ob-leader-name').value.trim(),
         botToken:    document.getElementById('ob-bot-token').value.trim(),
+        botType:     document.getElementById('ob-bot-type').value,
         sponsorId:   document.getElementById('ob-sponsor-id').value.trim(),
         leadGroupId: document.getElementById('ob-lead-group').value.trim(),
         vipGroup:    document.getElementById('ob-vip-group').value.trim(),
