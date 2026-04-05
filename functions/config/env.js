@@ -6,6 +6,7 @@ const env = {
     TELEGRAM_WEBHOOK_URL: process.env.TELEGRAM_WEBHOOK_URL || '',
     GROQ_API_KEY: process.env.GROQ_API_KEY || '',
     ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID || '',
+    MASTER_BOT_TOKEN: process.env.MASTER_BOT_TOKEN || '',
     // Additional config loaded here
 };
 

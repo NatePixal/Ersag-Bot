@@ -16,7 +16,14 @@ const routeUpdate = async (update, botToken) => {
         const rawText = message ? message.text || '' : '';
         const cbData = callbackQuery ? callbackQuery.data : null;
 
-        // Resolve user identity
+        // 1. Explicitly intercept the Master/Hub Bot
+        const env = require('../config/env');
+        if (env.MASTER_BOT_TOKEN && botToken === env.MASTER_BOT_TOKEN) {
+            logger.info(`[Route: MasterBot] Intercepting traffic and mapping to Leader Hub for user ${telegramUserId}`);
+            return require('../bots/leaderHubBot').run(update, botToken);
+        }
+
+        // 2. Resolve user identity for Standard Tenant Bots
         const role = await identityResolver.resolveRole(telegramUserId, botToken);
         const botOwnerId = await botRegistry.getBotOwner(botToken);
         
