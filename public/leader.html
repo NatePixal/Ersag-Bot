@@ -42,22 +42,43 @@
                  </div>
             </div>
             
-            <div id="dashboard-content" class="hidden p-5">
-                <div class="bg-gray-800 text-white rounded-2xl p-5 mb-5 shadow-lg flex justify-between items-center pattern-bg">
-                    <div>
-                        <p class="text-xs text-gray-400 uppercase tracking-widest font-bold">AI Tarifi</p>
-                        <p id="quota-status" class="text-2xl font-bold mt-1">20% <span class="text-xs text-gray-400 font-normal">chegirma</span></p>
+            <div id="dashboard-content" class="hidden p-4">
+                <!-- Analytics Stats Grid -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Barcha Leads</p>
+                        <p id="stat-total-leads" class="text-3xl font-bold text-gray-800">—</p>
                     </div>
-                    <button onclick="switchTab('billing')" class="bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold px-3 py-2 rounded-lg">To'lov qilish</button>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Bugun</p>
+                        <p id="stat-leads-today" class="text-3xl font-bold text-emerald-600">—</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Foydalanuvchilar</p>
+                        <p id="stat-total-users" class="text-3xl font-bold text-blue-600">—</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Obuna</p>
+                        <p id="stat-subscription" class="text-sm font-bold mt-2">—</p>
+                    </div>
                 </div>
-                
+
+                <!-- My Bot Link (Share) -->
+                <div class="bg-gray-800 text-white rounded-2xl p-4 mb-4 shadow-md">
+                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-2">Mening Havolam</p>
+                    <p id="my-bot-link" class="text-xs font-mono text-emerald-300 break-all mb-3">Yuklanmoqda...</p>
+                    <button onclick="copyMyLink()" class="w-full bg-emerald-600 text-white text-xs font-bold py-2 rounded-xl">
+                        📋 Havolani Nusxalash
+                    </button>
+                </div>
+
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-bold text-gray-800 text-sm">Yangi Mijozlar (Leadlar)</h3>
-                    <button onclick="fetchLeads()" class="text-emerald-600 text-xs font-bold">Yangilash</button>
+                    <h3 class="font-bold text-gray-800 text-sm">Mijozlar (Leadlar)</h3>
+                    <button onclick="fetchLeads()" class="text-emerald-600 text-xs font-bold">🔄 Yangilash</button>
                 </div>
                 
                 <div id="leads-container" class="space-y-3">
-                    <p class="text-center text-xs text-gray-400 py-6">Mijozlar yuklanmoqda...</p>
+                    <p class="text-center text-xs text-gray-400 py-6">Yuklanmoqda...</p>
                 </div>
             </div>
         </section>

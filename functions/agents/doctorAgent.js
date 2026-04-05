@@ -1,6 +1,7 @@
 const aiService = require('./aiService');
 const telegramApi = require('../utils/telegramApi');
 const { db } = require('../config/db');
+const sheetsService = require('../services/sheetsService');
 const logger = require('../utils/logger');
 
 /**
@@ -153,8 +154,22 @@ Javob 2: ${session.answer2 || ''}
 Javob 3: ${session.answer3 || ''}
     `.trim();
     
+    // Use live Doctor_Baza from Google Sheets if available, else fall back to local
+    let dynamicKnowledge = '';
+    try {
+        const baza = await sheetsService.getDoctorBaza();
+        if (baza && baza.length > 0) {
+            dynamicKnowledge = '\n\nJONLI BILIM BAZASI (Google Sheets):\n' +
+                baza.map(b => `- ${b.symptom}: ${b.product_codes.join(', ')} | ${b.howToUse}`).join('\n');
+            logger.info(`[DoctorAgent] Using ${baza.length} Sheets entries`);
+        }
+    } catch (e) {
+        logger.warn('[DoctorAgent] Sheets not available, using local knowledge');
+    }
+    
     const messages = [{ role: 'user', content: conversationSummary }];
-    const fullPrompt = DOCTOR_SYSTEM_PROMPT + '\n\n' + PRODUCTS_KNOWLEDGE;
+    const fullPrompt = DOCTOR_SYSTEM_PROMPT + '\n\n' + PRODUCTS_KNOWLEDGE +
+        (dynamicKnowledge ? '\n' + dynamicKnowledge : '');
     
     const recommendation = await aiService.callLLM(messages, fullPrompt);
     await telegramApi.sendMessage(botToken, chatId, recommendation);

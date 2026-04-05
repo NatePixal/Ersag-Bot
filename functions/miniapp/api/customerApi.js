@@ -1,5 +1,6 @@
 const express = require('express');
 const customerService = require('../../services/customerService');
+const sheetsService = require('../../services/sheetsService');
 const { db } = require('../../config/db');
 
 const router = express.Router();
@@ -60,16 +61,30 @@ router.get('/context', async (req, res) => {
     }
 });
 
-// A dummy catalog response (to be connected to a real DB later)
-router.get('/catalog', (req, res) => {
-    res.json({
-        status: 'success',
-        products: [
-            { id: 1, name: 'Eco Clean', price: '120,000 UZS', category: 'Uy tozalash' },
-            { id: 2, name: 'Aloe Vera Extract', price: '80,000 UZS', category: 'Go\'zallik' },
-            { id: 3, name: 'Immune Boost', price: '150,000 UZS', category: 'Sog\'liq' }
-        ]
-    });
+// Catalog — pulls from Google Sheets with 15-min cache, falls back to hardcoded
+router.get('/catalog', async (req, res) => {
+    try {
+        const sheetProducts = await sheetsService.getCatalog();
+        
+        if (sheetProducts && sheetProducts.length > 0) {
+            return res.json({ status: 'success', source: 'sheets', products: sheetProducts });
+        }
+        
+        // Fallback to hardcoded
+        res.json({
+            status: 'success',
+            source: 'local',
+            products: [
+                { code: 'ERG-101', name: 'Immune Boost', price: '85,000 UZS', category: "Sog'liq", description: 'Immunitetni kuchaytirish' },
+                { code: 'ERG-201', name: 'Bio Shampun', price: '65,000 UZS', category: "Go'zallik", description: 'Soch to\'kilishiga qarshi' },
+                { code: 'ERG-301', name: 'Kollagen Krem', price: '95,000 UZS', category: "Go'zallik", description: 'Terini mustahkamlash' },
+                { code: 'ERG-401', name: 'SlimTea', price: '55,000 UZS', category: "Sog'liq", description: 'Vazn nazorati' },
+                { code: 'ERG-501', name: 'Eco Clean', price: '45,000 UZS', category: 'Uy tozalash', description: 'Kimyosiz tozalovchi' }
+            ]
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch catalog' });
+    }
 });
 
 module.exports = router;
