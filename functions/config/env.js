@@ -8,8 +8,8 @@ const env = {
     ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID || '',
     ADMIN_GROUP_ID: process.env.ADMIN_GROUP_ID || '-1003600813056',
     MASTER_BOT_TOKEN: process.env.MASTER_BOT_TOKEN || '',
-    GOOGLE_SHEETS_ID: process.env.GOOGLE_SHEETS_ID || '',
-    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || '',
+    GOOGLE_SHEETS_ID: process.env.GOOGLE_SHEETS_ID || '104989887270278672461',
+    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || '09b7791179f5ce5eb00ab0fc9aa889fc8462aa45',
     // Additional config loaded here
 };
 
