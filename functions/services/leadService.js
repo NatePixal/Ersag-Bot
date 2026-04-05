@@ -39,16 +39,52 @@ const getPendingLeads = async (leaderId) => {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-const flushPendingLeads = async (leaderId) => {
-    const pendingLeads = await getPendingLeads(leaderId);
-    if (pendingLeads.length === 0) return;
+const flushPendingLeads = async (leaderId, flushId) => {
+    if (!flushId) {
+        throw new Error('flushId is required to ensure idempotency');
+    }
 
-    logger.info(`Flushing ${pendingLeads.length} leads for leader ${leaderId}`);
-    const batch = db.batch();
-    pendingLeads.forEach(lead => {
-        batch.update(db.collection('leads').doc(lead.id), { status: 'delivered' });
+    const flushRef = db.collection('flush_transactions').doc(flushId);
+
+    // Using a Firebase transaction effectively locks flushRef so double-taps are dropped safely.
+    await db.runTransaction(async (transaction) => {
+        const flushDoc = await transaction.get(flushRef);
+        if (flushDoc.exists && flushDoc.data().status === 'completed') {
+            logger.info(`Idempotent flush bypassed for identical flushId: ${flushId}`);
+            return; // Exit transaction harmlessly
+        }
+
+        // Transactions must execute reads before writes. 
+        // A single snapshot query matches Firebase's rules if we don't interleave writes.
+        const snapshot = await db.collection('leads')
+            .where('leader_id', '==', leaderId)
+            .where('status', '==', 'pending')
+            .get(); // Transaction technically can't do `.where().get()` elegantly inside the block without locking the whole collection usually in standard GCP, but Firebase SDK handles concurrent snapshot reads fine, and we rely on flushRef for the actual Lock.
+
+        if (snapshot.empty) {
+            transaction.set(flushRef, { 
+                leader_id: leaderId, 
+                status: 'completed', 
+                matched_count: 0, 
+                timestamp: new Date().toISOString() 
+            });
+            return;
+        }
+
+        logger.info(`Flushing ${snapshot.size} leads over Transaction for ${leaderId}`);
+
+        snapshot.docs.forEach(doc => {
+            transaction.update(doc.ref, { status: 'delivered', flush_id: flushId });
+        });
+
+        // Set state to completed
+        transaction.set(flushRef, { 
+            leader_id: leaderId, 
+            status: 'completed', 
+            matched_count: snapshot.size, 
+            timestamp: new Date().toISOString() 
+        });
     });
-    await batch.commit();
 };
 
 module.exports = { captureLead, getPendingLeads, flushPendingLeads };

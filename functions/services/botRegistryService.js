@@ -36,8 +36,13 @@ const isActiveBot = async (botToken) => {
     return bot !== null && bot.status === 'active';
 };
 
+const getBotByTenantId = async (tenantId) => {
+    return await botRepo.findBotByUuid(tenantId);
+};
+
 module.exports = {
     registerBot,
     getBotOwner,
-    isActiveBot
+    isActiveBot,
+    getBotByTenantId
 };

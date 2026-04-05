@@ -1,31 +1,31 @@
 const express = require('express');
+const cors = require('cors');
+
+const tenantResolver = require('../../middlewares/tenantResolver');
+const telegramAuth = require('../../middlewares/telegramAuth');
+const leaderAuth = require('../../middlewares/leaderAuth');
+const rateLimit = require('../../middlewares/rateLimiter');
+const auditLogger = require('../../middlewares/auditLogger');
+
+const customerApi = require('./customerApi');
+const leaderApi = require('./leaderApi');
+
 const router = express.Router();
-const leadService = require('../../services/leadService');
 
-router.get('/getCatalog', async (req, res) => {
-    res.json([
-        { category: "Sog'liq", name_uz: "Omega 3", price: "240000", image: "" },
-        { category: "Go'zallik", name_uz: "Atirgul yuzi kremi", price: "180000", image: "" }
-    ]);
-});
+// CORS for Web Views relying on Auth headers instead of cookies.
+router.use(cors({ origin: true }));
 
-router.get('/getLeaderConfig', async (req, res) => {
-    const sponsor = req.query.sponsor || 'L5422685';
-    res.json({ sponsor_id: sponsor });
-});
+// Apply basic protective rate limiting
+router.use(rateLimit({ windowMs: 60000, max: 30 })); // max 30 hits per minute
 
-router.get('/leads', async (req, res) => {
-    const leaderId = req.query.leader_id;
-    const adminSecret = req.query.admin_secret;
-    
-    if (!adminSecret) return res.status(403).json({ error: 'Ruxsat yoq. Secret noto\'g\'ri' });
+// Apply required security middlewares globally for /api
+router.use(tenantResolver);
+router.use(telegramAuth);
 
-    try {
-        const leads = await leadService.getPendingLeads(leaderId);
-        res.json({ leads });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
+// Mount the two distinct apps
+router.use('/customer', customerApi);
+
+// Mount the strictly verified leader endpoints, adding strict Audit Logging
+router.use('/leader', leaderAuth, auditLogger, leaderApi);
 
 module.exports = router;

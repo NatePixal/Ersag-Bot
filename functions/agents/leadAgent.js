@@ -1,38 +1,95 @@
 const telegramApi = require('../utils/telegramApi');
 const aiService = require('./aiService');
 const logger = require('../utils/logger');
+const customerService = require('../services/customerService');
+const leadService = require('../services/leadService'); // To capture leads when contact is shared
 
 const run = async (update, botToken) => {
     logger.info('Running leadAgent');
     const message = update.message;
     const callbackQuery = update.callback_query;
-    const chatId = message ? message.chat.id : callbackQuery.message.chat.id;
     
+    // Safety check
+    if (!message && !callbackQuery) return;
+
+    const chatId = message ? message.chat.id : callbackQuery.message.chat.id;
+    const telegramUserId = message ? message.from.id : callbackQuery.from.id;
+
+    // Handle Language Selector Callback
     if (callbackQuery && callbackQuery.data.startsWith('lang_')) {
-        // Save lang choice logic goes here
-        // Then send main menu
-        await sendMainMenu(botToken, chatId, callbackQuery.data.split('_')[1]);
+        const selectedLang = callbackQuery.data.split('_')[1];
+        await customerService.upsertCustomer(botToken, telegramUserId, { language: selectedLang });
+        await sendMainMenu(botToken, chatId, selectedLang);
         return;
     }
 
-    const text = message ? message.text : '';
+    // Handle Contact Sharing (Lead Dam Passing)
+    if (message && message.contact) {
+        const contact = message.contact;
+        const name = contact.first_name || 'Mijoz';
+        const phone = contact.phone_number;
+        
+        await leadService.captureLead(botToken, telegramUserId, { name, phone });
+        await customerService.upsertCustomer(botToken, telegramUserId, { is_lead_captured: true, phone });
+        
+        const lang = (await customerService.getCustomer(botToken, telegramUserId))?.language || 'uz';
+        const msg = lang === 'ru' ? "Спасибо! Ваши данные приняты. Теперь вы можете использовать все функции." : "Rahmat! Ma'lumotlaringiz qabul qilindi. Endi barcha xizmatlardan foydalanishingiz mumkin.";
+        
+        await telegramApi.sendMessage(botToken, chatId, msg);
+        await sendMainMenu(botToken, chatId, lang);
+        return;
+    }
+
+    const text = (message && message.text) ? message.text : '';
+
+    // Check Customer State (Lead Dam Logic)
+    const customer = await customerService.getCustomer(botToken, telegramUserId);
+    const lang = customer?.language || 'uz';
+    const isLeadCaptured = customer?.is_lead_captured || false;
 
     // Handle standard static buttons first
     if (['Ersag Portal', 'Katalog', 'VIP group', 'Admin bilan aloqa', 'Ulashish', "Go'zallik", "Sog'liq", 'Tozalash', 'Bepul konsultatsiya', 'Ro\'yxatdan o\'tish'].includes(text)) {
-        await handleMenuAction(botToken, chatId, text);
+        
+        // Lead Dam Enforcement: Block access to certain features if not collected
+        if (!isLeadCaptured && ['Ersag Portal', 'Katalog', "Go'zallik", "Sog'liq", 'Tozalash'].includes(text)) {
+            const damMsg = lang === 'ru' 
+                ? "Пожалуйста, поделитесь своим номером телефона (нажмите «Ulashish / Поделиться кнопкой»), чтобы получить доступ к каталогу и порталу." 
+                : "Katalog va portalga kirish uchun, iltimos kontakt ulashish tugmasini bosing ('Ulashish').";
+            await telegramApi.sendMessage(botToken, chatId, damMsg);
+            return;
+        }
+
+        await handleMenuAction(botToken, chatId, text, lang);
         return;
     }
 
     // Default AI behavior if not clicking a standard menu
+    // ENFORCE LEAD DAM FOR AI
+    if (!isLeadCaptured) {
+        const systemPrompt = lang === 'ru'
+            ? "Вы дружелюбный ИИ-помощник ERSAG. Пользователь еще не оставил свой контакт. Ваша цель - убедить их нажать кнопку 'Ulashish' или 'Ro'yxatdan o'tish', чтобы вы могли полноценно с ними работать."
+            : "You are a friendly lead generation assistant for ERSAG. Your goal is to collect their phone number. Ask them to press 'Ulashish' (share contact) or 'Ro'yxatdan o'tish'. Be brief.";
+        
+        const messages = [{ role: "user", content: text }];
+        const response = await aiService.callLLM(messages, systemPrompt);
+        await telegramApi.sendMessage(botToken, chatId, response);
+        return;
+    }
+
+    // Fully unlocked AI
     const messages = [{ role: "user", content: text }];
-    const systemPrompt = "You are a friendly lead generation assistant for ERSAG. Your goal is to collect their name and phone number. Ask them to press 'Bepul konsultatsiya' or 'Ro\'yxatdan o\'tish' from the menu.";
-    const response = await aiService.callLLM(messages, systemPrompt);
+    const systemPrompt = lang === 'ru'
+        ? "Вы умный консультант ERSAG. Пользователь подтвержден. Отвечайте на его запросы о продукции."
+        : "Siz ERSAG kompaniyasining aqlli maslahatchisisiz. Mijoz tasdiqlangan. Ularga mahsulotlar bo'yicha yordam bering.";
     
+    const response = await aiService.callLLM(messages, systemPrompt);
     await telegramApi.sendMessage(botToken, chatId, response);
 };
 
 const sendMainMenu = async (botToken, chatId, lang) => {
-    // As specified: Ersag portal, katalog, vip group, contact of the admin, share contact, beauty, health, cleaning, free consultation, register
+    // Both RU/UZ supported now via unified or localized buttons if desired.
+    // For simplicity with existing agent logic, using identical strings or translation.
+    // Ideally strings match handler options.
     const replyMarkup = {
         keyboard: [
             [{text: "Ersag Portal"}, {text: "Katalog"}],
@@ -42,25 +99,27 @@ const sendMainMenu = async (botToken, chatId, lang) => {
         ],
         resize_keyboard: true
     };
-    await telegramApi.sendMessage(botToken, chatId, "Asosiy menyu / Главное меню:", replyMarkup);
+    
+    const textMsg = lang === 'ru' ? "Главное меню:" : "Asosiy menyu:";
+    await telegramApi.sendMessage(botToken, chatId, textMsg, replyMarkup);
 };
 
-const handleMenuAction = async (botToken, chatId, option) => {
+const handleMenuAction = async (botToken, chatId, option, lang) => {
     switch (option) {
         case 'Ersag Portal':
-            await telegramApi.sendMessage(botToken, chatId, "Ersag portaliga kirish uchun web-app tugmasini bosing.");
+            await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Нажмите на кнопку web-app для входа на портал Ersag." : "Ersag portaliga kirish uchun web-app tugmasini bosing.");
             break;
         case 'Katalog':
-            await telegramApi.sendMessage(botToken, chatId, "Barcha mahsulotlar bu yerda: 👉 Katalog");
+            await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Все продукты здесь: 👉 Каталог" : "Barcha mahsulotlar bu yerda: 👉 Katalog");
             break;
         case 'Admin bilan aloqa':
-            await telegramApi.sendMessage(botToken, chatId, "Admin bilan bog'lanish uchun: @MSU_Berdibekov");
+            await telegramApi.sendMessage(botToken, chatId, "Admin bilan bog'lanish uchun / Связаться с админом: @MSU_Berdibekov");
             break;
         case 'Ro\'yxatdan o\'tish':
-            await telegramApi.sendMessage(botToken, chatId, "A'zo bo'lish bepul va 20% chegirma beradi! Saytdan foydalaning.");
+            await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Регистрация бесплатна и дает 20% скидку! Воспользуйтесь сайтом." : "A'zo bo'lish bepul va 20% chegirma beradi! Saytdan foydalaning.");
             break;
         default:
-            await telegramApi.sendMessage(botToken, chatId, "Tanlovingiz qabul qilindi.");
+            await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Ваш выбор принят." : "Tanlovingiz qabul qilindi.");
             break;
     }
 };

@@ -1,7 +1,7 @@
 const functions = require('firebase-functions');
 const express = require('express');
 const { handleTelegramUpdate } = require('./gateway/telegramGateway');
-// const miniAppRouter = require('./miniapp/api');
+const miniAppRouter = require('./miniapp/api');
 
 const logger = require('./utils/logger');
 
@@ -15,7 +15,7 @@ botApp.post('/webhook/:botToken', handleTelegramUpdate);
 // Leader Mini App REST APIs
 const apiApp = express();
 apiApp.use(express.json());
-// apiApp.use('/', miniAppRouter);
+apiApp.use('/api', miniAppRouter);
 
 // Export Functions
 exports.botGateway = functions.https.onRequest(botApp);
