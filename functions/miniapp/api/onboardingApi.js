@@ -27,6 +27,7 @@ router.get('/profile', async (req, res) => {
         res.json({
             registered: true,
             bot_token: botData.bot_token,
+            bot_type: botData.bot_type || 'sales',
             tenant_id: botData.webhook_uuid,
             status: botData.status,
             sponsor_id: config.sponsor_id || '',
@@ -42,7 +43,10 @@ router.post('/onboard', async (req, res) => {
     if (!req.telegramUser) return res.status(401).json({ error: 'Auth failed' });
     const leaderId = String(req.telegramUser.id);
     
-    const { botToken, sponsorId, vipGroup, phone, leadGroupId, leaderName } = req.body;
+    const { botToken, sponsorId, vipGroup, phone, leadGroupId, leaderName, botType } = req.body;
+    
+    const VALID_BOT_TYPES = ['sales', 'billing', 'support'];
+    const resolvedBotType = VALID_BOT_TYPES.includes(botType) ? botType : 'sales';
     
     if (!botToken || !sponsorId) return res.status(400).json({ error: 'Missing req fields' });
     
@@ -52,7 +56,7 @@ router.post('/onboard', async (req, res) => {
     
     try {
         // Registers and binds native webhooks identically
-        await botRegistryService.registerBot(botToken, leaderId);
+        await botRegistryService.registerBot(botToken, leaderId, resolvedBotType);
         
         await db.collection('leaders').doc(leaderId).set({
             name: leaderName || '',

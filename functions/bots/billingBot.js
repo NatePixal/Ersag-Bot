@@ -26,6 +26,13 @@ const run = async (update, botToken) => {
     const chatId = message.chat.id;
     const userId = String(message.from.id);
     const text = message.text || '';
+    const rawText = text;
+
+    // Billing Brain /start → show billing menu
+    if (rawText.startsWith('/start') || rawText === 'Menyu') {
+        await sendBillingMenu(botToken, chatId);
+        return;
+    }
 
     // If user sends photo (payment receipt) → forward to admin group
     if (message.photo) {
@@ -102,5 +109,21 @@ const approvePayment = async (leaderId) => {
     await leadService.flushPendingLeads(leaderId, internalFlushId);
 };
 
-module.exports = { run, receiveScreenshot, approvePayment };
+const sendBillingMenu = async (botToken, chatId) => {
+    // Billing Brain menu — payment-focused buttons only
+    const replyMarkup = {
+        keyboard: [
+            [{ text: "💳 Balansni to'ldirish" }, { text: "📜 To'lov tarixi" }],
+            [{ text: "📸 Chek yuborish" }],
+            [{ text: "📞 Admin bilan bog'lanish" }]
+        ],
+        resize_keyboard: true
+    };
+    await telegramApi.sendMessage(botToken, chatId,
+        "💳 *Billing Panel*\n\nTo'lov qilish yoki chek yuborish uchun quyidagi tugmalardan foydalaning:",
+        replyMarkup
+    );
+};
+
+module.exports = { run, receiveScreenshot, approvePayment, sendBillingMenu };
 

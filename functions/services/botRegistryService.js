@@ -2,8 +2,8 @@ const botRepo = require('../repositories/botRepository');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 
-const registerBot = async (botToken, leaderId) => {
-    logger.info(`Registering new bot for leader: ${leaderId}`);
+const registerBot = async (botToken, leaderId, botType = 'sales') => {
+    logger.info(`Registering new bot (type: ${botType}) for leader: ${leaderId}`);
     
     // Validate uniqueness
     const existingBot = await botRepo.findBotByToken(botToken);
@@ -33,6 +33,7 @@ const registerBot = async (botToken, leaderId) => {
     const botData = {
         bot_token: botToken,
         leader_id: leaderId,
+        bot_type: botType,
         status: 'active',
         webhook_uuid: webhookUuid,
         created_at: new Date().toISOString()
@@ -56,9 +57,16 @@ const getBotByTenantId = async (tenantId) => {
     return await botRepo.findBotByUuid(tenantId);
 };
 
+const getBotType = async (botToken) => {
+    const bot = await botRepo.findBotByToken(botToken);
+    if (!bot) return 'sales'; // sensible default
+    return bot.bot_type || 'sales';
+};
+
 module.exports = {
     registerBot,
     getBotOwner,
+    getBotType,
     isActiveBot,
     getBotByTenantId
 };

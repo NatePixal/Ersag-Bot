@@ -87,21 +87,18 @@ const run = async (update, botToken) => {
 };
 
 const sendMainMenu = async (botToken, chatId, lang) => {
-    // Both RU/UZ supported now via unified or localized buttons if desired.
-    // For simplicity with existing agent logic, using identical strings or translation.
-    // Ideally strings match handler options.
+    // Sales Brain menu — Ersag Portal, catalog, AI Doctor, product lookups
     const replyMarkup = {
         keyboard: [
-            [{text: "Ersag Portal"}, {text: "Katalog"}],
-            [{text: "Go'zallik"}, {text: "Sog'liq"}, {text: "Tozalash"}],
-            [{text: "👨‍⚕️ Doctor Ersag"}, {text: "🔍 Mahsulot kodi"}],
-            [{text: "VIP group"}, {text: "Bepul konsultatsiya"}, {text: "Ro'yxatdan o'tish"}],
-            [{text: "Admin bilan aloqa", url: "https://t.me/MSU_Berdibekov"}, {text: "Ulashish", request_contact: true}]
+            [{ text: "🛍️ Ersag Portal" }, { text: "📦 Katalog" }],
+            [{ text: "💄 Go'zallik" }, { text: "💪 Sog'liq" }, { text: "🏠 Tozalash" }],
+            [{ text: "👨‍⚕️ Doctor Ersag" }, { text: "🔍 Mahsulot kodi" }],
+            [{ text: "🌟 VIP group" }, { text: "✅ Ro'yxatdan o'tish" }],
+            [{ text: "📞 Admin", url: "https://t.me/MSU_Berdibekov" }]
         ],
         resize_keyboard: true
     };
-    
-    const textMsg = lang === 'ru' ? "Главное меню:" : "Asosiy menyu:";
+    const textMsg = lang === 'ru' ? "Главное меню (Продажи):" : "Asosiy menyu (Savdo):";
     await telegramApi.sendMessage(botToken, chatId, textMsg, replyMarkup);
 };
 

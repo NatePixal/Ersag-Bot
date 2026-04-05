@@ -94,19 +94,39 @@ const routeUpdate = async (update, botToken) => {
             }
         }
 
-        // Intent Classification
+        // ── Step 3: Multi-Brain Dispatch ────────────────────────────────────────
+        // For customer traffic, check the bot_type FIRST. Each bot type has its
+        // own intended behavior. Only 'sales' bots run the full intent pipeline.
+        if (role === 'customer') {
+            const botType = await botRegistry.getBotType(botToken);
+            logger.info(`[Route: BotType=${botType}] Dispatching for user ${telegramUserId}`);
+
+            // ── Billing Bot Brain ────────────────────────────────────────────
+            if (botType === 'billing') {
+                return require('../bots/billingBot').run(update, botToken);
+            }
+
+            // ── Support Bot Brain ────────────────────────────────────────────
+            if (botType === 'support') {
+                return require('../agents/supportAgent').run(update, botToken);
+            }
+
+            // ── Sales Bot (default) — run full intent pipeline ───────────────
+            // botType === 'sales' OR any unrecognised type falls through here
+        }
+
+        // Intent Classification (Sales / Admin / Leader paths)
         let intent = role; 
         if (role === 'customer') {
             if (!hasQuota) {
                 intent = 'fallback';
             } else if (require('../agents/productLookupAgent').isProductQuery(rawText)) {
-                intent = 'product'; // ERG-xxx code lookup
+                intent = 'product';
             } else if (
                 text.includes('doctor') || text.includes('doktor') || text.includes('konsultatsiya') ||
-                text.includes('konsultasiya') || text.includes('консультация') || text.includes('shifokor') ||
-                text.includes('doctor ersag')
+                text.includes('konsultasiya') || text.includes('консультация') || text.includes('shifokor')
             ) {
-                intent = 'doctor'; // Wellness AI consultation
+                intent = 'doctor';
             } else if (text.includes('vip') || text.includes('guruh') || text.includes('группа')) {
                 intent = 'vip';
             } else if (text.includes('qimmat') || text.includes('дорого') || text.includes('expensive')) {
@@ -117,7 +137,7 @@ const routeUpdate = async (update, botToken) => {
         }
 
         // Routing Execution
-        logger.info(`[Route: ${intent}Agent] Routing update from user ${telegramUserId}`);
+        logger.info(`[Route: ${intent}] Routing update from user ${telegramUserId}`);
 
         switch(intent) {
             case 'fallback': {
@@ -128,7 +148,6 @@ const routeUpdate = async (update, botToken) => {
                 return;
             }
             case 'doctor': {
-                // Load leader context for dynamic sponsor link in recommendation
                 const leaderCtx = {};
                 if (botOwnerId) {
                     const leaderDoc = await require('../config/db').db.collection('leaders').doc(String(botOwnerId)).get();

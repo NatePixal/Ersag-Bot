@@ -24,6 +24,21 @@ const run = async (update, botToken) => {
     
     const chatId = message.chat.id;
     const text = (message.text || '').toLowerCase();
+    const rawText = message.text || '';
+
+    // Show dedicated Support menu on /start or explicit menu request
+    if (rawText.startsWith('/start') || rawText === 'FAQ' || rawText === 'Menyu' || rawText === 'Меню') {
+        await sendSupportMenu(botToken, chatId, /[а-яё]/i.test(text) ? 'ru' : 'uz');
+        return;
+    }
+
+    // FAQ: Track Order stub
+    if (text.includes('track') || text.includes('buyurtma') || text.includes('заказ') || text.includes('kuzat')) {
+        await telegramApi.sendMessage(botToken, chatId,
+            "📦 Buyurtmangizni kuzatish uchun buyurtma raqamingizni yuboring yoki admin bilan bog'laning: @MSU_Berdibekov"
+        );
+        return;
+    }
     
     // Detect language from text (simple heuristic)
     const isRussian = /[а-яё]/i.test(text);
@@ -41,4 +56,20 @@ const run = async (update, botToken) => {
     }
 };
 
-module.exports = { run };
+const sendSupportMenu = async (botToken, chatId, lang = 'uz') => {
+    // Support Brain menu — FAQ, Order Tracking, Contact Admin only
+    const replyMarkup = {
+        keyboard: [
+            [{ text: "❓ FAQ — Savollar" }, { text: "📦 Buyurtmani kuzatish" }],
+            [{ text: "💬 Narx va chegirma" }, { text: "🚚 Yetkazib berish" }],
+            [{ text: "📞 Admin bilan bog'lanish" }]
+        ],
+        resize_keyboard: true
+    };
+    const textMsg = lang === 'ru'
+        ? "Служба поддержки — выберите тему:"
+        : "Yordam markazi — mavzuni tanlang:";
+    await telegramApi.sendMessage(botToken, chatId, textMsg, replyMarkup);
+};
+
+module.exports = { run, sendSupportMenu };
