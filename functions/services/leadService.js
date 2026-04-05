@@ -1,6 +1,7 @@
 const { db } = require('../config/db');
 const botRegistry = require('./botRegistryService');
 const quotaService = require('./quotaService');
+const notificationService = require('./notificationService');
 const logger = require('../utils/logger');
 
 // Store captured leads
@@ -13,6 +14,8 @@ const captureLead = async (botToken, telegramUserId, leadData) => {
     const leadRecord = {
         name: leadData.name,
         phone: leadData.phone,
+        interest: leadData.interest || null,
+        problem: leadData.problem || null,
         leader_id: leaderId,
         telegram_user_id: telegramUserId,
         status: hasQuota ? 'delivered' : 'pending',
@@ -21,10 +24,15 @@ const captureLead = async (botToken, telegramUserId, leadData) => {
     
     const docRef = await db.collection('leads').add(leadRecord);
     
+    // CORE FEATURE: Notify the leader's Telegram group this lead was captured
     if (hasQuota) {
-        logger.info(`Sending lead ${leadData.name} to leader ${leaderId}`);
+        logger.info(`[Lead] Sending lead ${leadData.name} to leader ${leaderId}'s group`);
+        // Fire-and-forget (non-blocking) so we don't delay the user response
+        notificationService.notifyLeaderNewLead(botToken, leaderId, leadData).catch(err =>
+            logger.error('[Lead] Notification failed silently:', err)
+        );
     } else {
-        logger.info(`Lead locked for leader ${leaderId} due to quota`);
+        logger.info(`[Lead] Locked for leader ${leaderId} due to quota`);
     }
 
     return { id: docRef.id, ...leadRecord };

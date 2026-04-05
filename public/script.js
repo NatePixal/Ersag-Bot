@@ -1,16 +1,14 @@
 // ──────────── CONFIG ────────────
-// SPONSOR_ID and REG_URL start with defaults but are overwritten by
-// loadLeaderConfig() on init using the ?sponsor= URL parameter.
-const CATALOG_API       = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/getCatalog";
-const LEADER_CONFIG_API = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/getLeaderConfig";
-const PENDING_LEADS_API = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/leads";
-const DEFAULT_SPONSOR   = "L5422685";
+// Sponsor ID and registration URL are now DYNAMIC — fetched from the backend
+// based on which leader the current user was referred by.
+const CATALOG_API       = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/customer/catalog";
+const LEADER_CONFIG_API = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/customer/context";
+const PENDING_LEADS_API = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/leader/leads";
+const DEFAULT_SPONSOR   = "5422685";
 
-// Extract ?sponsor= from the URL — works for both direct links and Telegram deep links
 const urlParams   = new URLSearchParams(window.location.search);
-const SPONSOR_PARAM = (urlParams.get('sponsor') || DEFAULT_SPONSOR).trim();
 
-// These are mutable — overwritten by loadLeaderConfig()
+// Mutable — overwritten by loadLeaderConfig() from backend
 let SPONSOR_ID = DEFAULT_SPONSOR;
 let REG_URL    = buildRegUrl(SPONSOR_ID);
 
@@ -293,12 +291,13 @@ function cleanCatStr(str) {
 // ──────────── MULTI-TENANT LEADER CONFIG ────────────
 async function loadLeaderConfig() {
     try {
-        const res = await secureApiFetch(LEADER_CONFIG_API + '?sponsor=' + encodeURIComponent(SPONSOR_PARAM));
+        // Fetch dynamic context from the backend based on this user's assigned leader
+        const res = await secureApiFetch(LEADER_CONFIG_API);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const cfg = await res.json();
         if (cfg && cfg.sponsor_id) {
             SPONSOR_ID = cfg.sponsor_id;
-            REG_URL    = buildRegUrl(SPONSOR_ID);
+            REG_URL    = cfg.ersag_registration_link || buildRegUrl(SPONSOR_ID);
             updateSponsorDom(SPONSOR_ID);
         }
     } catch (e) {

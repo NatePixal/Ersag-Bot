@@ -20,3 +20,7 @@ apiApp.use('/api', miniAppRouter);
 // Export Functions
 exports.botGateway = functions.https.onRequest(botApp);
 exports.api = functions.https.onRequest(apiApp);
+
+// Scheduled Jobs
+const { subscriptionJob } = require('./jobs/subscriptionJob');
+exports.subscriptionJob = subscriptionJob;

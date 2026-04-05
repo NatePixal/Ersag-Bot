@@ -66,6 +66,25 @@ const routeUpdate = async (update, botToken) => {
         // Quota check
         let hasQuota = true;
         if (botOwnerId && role === 'customer') {
+            // Phase 3: Subscription enforcement — check leader subscription FIRST
+            const subscriptionService = require('../services/subscriptionService');
+            const subscriptionState = await subscriptionService.checkLeaderAccess(botOwnerId);
+            
+            if (!subscriptionState.active) {
+                // Leader subscription expired — block AI, show graceful message
+                logger.warn(`[Subscription EXPIRED] Leader ${botOwnerId} — blocking AI for user ${telegramUserId}`);
+                await telegramApi.sendMessage(botToken, telegramUserId,
+                    "⚠️ Bu konsultant hozircha vaqtincha mavjud emas. Iltimos, keyinroq urinib ko'ring.\n\n" +
+                    "This consultant is temporarily unavailable. Please try again later."
+                );
+                return;
+            }
+            
+            if (subscriptionState.status === 'grace') {
+                logger.warn(`[Subscription GRACE] Leader ${botOwnerId} is in grace period`);
+                // Still works — leader just gets a gentle warning via the leader bot separately
+            }
+            
             hasQuota = await quotaService.checkQuota(botOwnerId);
             if (!hasQuota) {
                 logger.warn(`[Quota EXCEEDED] Leader ${botOwnerId} has no quota left.`);

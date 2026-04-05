@@ -98,8 +98,10 @@ document.getElementById('onboard-form').addEventListener('submit', async (e) => 
     spinner.classList.remove('hidden');
     
     const payload = {
+        leaderName: document.getElementById('ob-leader-name').value.trim(),
         botToken: document.getElementById('ob-bot-token').value.trim(),
         sponsorId: document.getElementById('ob-sponsor-id').value.trim(),
+        leadGroupId: document.getElementById('ob-lead-group').value.trim(),
         vipGroup: document.getElementById('ob-vip-group').value.trim(),
         phone: document.getElementById('ob-phone').value.trim()
     };

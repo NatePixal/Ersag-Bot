@@ -42,7 +42,7 @@ router.post('/onboard', async (req, res) => {
     if (!req.telegramUser) return res.status(401).json({ error: 'Auth failed' });
     const leaderId = String(req.telegramUser.id);
     
-    const { botToken, sponsorId, vipGroup, phone } = req.body;
+    const { botToken, sponsorId, vipGroup, phone, leadGroupId, leaderName } = req.body;
     
     if (!botToken || !sponsorId) return res.status(400).json({ error: 'Missing req fields' });
     
@@ -55,9 +55,12 @@ router.post('/onboard', async (req, res) => {
         await botRegistryService.registerBot(botToken, leaderId);
         
         await db.collection('leaders').doc(leaderId).set({
+            name: leaderName || '',
             sponsor_id: sponsorId,
+            ersag_registration_link: `https://www.ersagglobal.uz/account.asp?mod=myaccount&sub=edit&action=register&p=1&sponsor=${encodeURIComponent(sponsorId)}`,
             vip_group: vipGroup || '',
             phone: phone || '',
+            lead_group_id: leadGroupId || '',
             updated_at: new Date().toISOString()
         }, { merge: true });
         
