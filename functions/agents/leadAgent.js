@@ -94,6 +94,7 @@ const sendMainMenu = async (botToken, chatId, lang) => {
         keyboard: [
             [{text: "Ersag Portal"}, {text: "Katalog"}],
             [{text: "Go'zallik"}, {text: "Sog'liq"}, {text: "Tozalash"}],
+            [{text: "👨‍⚕️ Doctor Ersag"}, {text: "🔍 Mahsulot kodi"}],
             [{text: "VIP group"}, {text: "Bepul konsultatsiya"}, {text: "Ro'yxatdan o'tish"}],
             [{text: "Admin bilan aloqa", url: "https://t.me/MSU_Berdibekov"}, {text: "Ulashish", request_contact: true}]
         ],

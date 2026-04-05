@@ -94,14 +94,24 @@ const routeUpdate = async (update, botToken) => {
             }
         }
 
-        // Basic Intent Classification
+        // Intent Classification
         let intent = role; 
         if (role === 'customer') {
             if (!hasQuota) {
-                intent = 'fallback'; // Bypass AI entirely
-            } else if (text.includes('qimmat') || text.includes('qanaqa') || text.includes('дорого') || text.includes('expensive')) {
+                intent = 'fallback';
+            } else if (require('../agents/productLookupAgent').isProductQuery(rawText)) {
+                intent = 'product'; // ERG-xxx code lookup
+            } else if (
+                text.includes('doctor') || text.includes('doktor') || text.includes('konsultatsiya') ||
+                text.includes('konsultasiya') || text.includes('консультация') || text.includes('shifokor') ||
+                text.includes('doctor ersag')
+            ) {
+                intent = 'doctor'; // Wellness AI consultation
+            } else if (text.includes('vip') || text.includes('guruh') || text.includes('группа')) {
+                intent = 'vip';
+            } else if (text.includes('qimmat') || text.includes('дорого') || text.includes('expensive')) {
                 intent = 'hesitant';
-            } else if (text.includes('yordam') || text.includes('savol') || text.includes('помощь') || text.includes('вопрос') || text.includes('narx') || text.includes('цена') || text.includes('dostavka') || text.includes('доставка')) {
+            } else if (text.includes('yordam') || text.includes('savol') || text.includes('помощь') || text.includes('narx') || text.includes('цена') || text.includes('dostavka')) {
                 intent = 'help';
             }
         }
@@ -110,13 +120,30 @@ const routeUpdate = async (update, botToken) => {
         logger.info(`[Route: ${intent}Agent] Routing update from user ${telegramUserId}`);
 
         switch(intent) {
-            case 'fallback':
+            case 'fallback': {
                 const leadService = require('../services/leadService');
                 const name = message ? message.from.first_name : 'Mijoz';
                 await leadService.captureLead(botToken, telegramUserId, { name, phone: 'No quota' });
                 await telegramApi.sendMessage(botToken, telegramUserId, "Rahmat! Operatorlarimiz tez orada siz bilan bog'lanishadi.");
-                logger.info('[Reply sent] Fallback response for out-of-quota customer.');
                 return;
+            }
+            case 'doctor': {
+                // Load leader context for dynamic sponsor link in recommendation
+                const leaderCtx = {};
+                if (botOwnerId) {
+                    const leaderDoc = await require('../config/db').db.collection('leaders').doc(String(botOwnerId)).get();
+                    if (leaderDoc.exists) Object.assign(leaderCtx, leaderDoc.data());
+                }
+                return require('../agents/doctorAgent').run(update, botToken, leaderCtx);
+            }
+            case 'product':
+                return require('../agents/productLookupAgent').run(update, botToken);
+            case 'vip': {
+                const vipService = require('../services/vipService');
+                const chatId = message ? message.chat.id : null;
+                if (chatId) await vipService.sendVipInvite(botToken, chatId, telegramUserId);
+                return;
+            }
             case 'admin':
                 return require('../agents/adminAgent').run(update, botToken);
             case 'leader':

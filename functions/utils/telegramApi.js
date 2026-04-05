@@ -45,4 +45,32 @@ const sendDocument = async (botToken, chatId, csvString, filename) => {
     }
 };
 
-module.exports = { sendMessage, sendDocument };
+const answerCallbackQuery = async (botToken, callbackQueryId, text = '') => {
+    try {
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_query_id: callbackQueryId, text })
+        });
+    } catch (error) {
+        logger.error(`Error answering callback: ${error.message}`);
+    }
+};
+
+const approveChatJoinRequest = async (botToken, chatId, userId) => {
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/approveChatJoinRequest`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, user_id: userId })
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            logger.error(`VIP approve error: ${errText}`);
+        }
+    } catch (error) {
+        logger.error(`Error approving join request: ${error.message}`);
+    }
+};
+
+module.exports = { sendMessage, sendDocument, answerCallbackQuery, approveChatJoinRequest };
