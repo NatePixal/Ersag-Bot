@@ -16,7 +16,7 @@ const callLLM = async (messages, systemPrompt) => {
             .filter(m => m && typeof m.content === 'string' && m.content.trim() !== '');
 
         const payload = {
-            model: "llama3-8b-8192",
+            model: "llama-3.1-8b-instant",
             messages: [
                 { role: "system", content: safeSystemPrompt },
                 ...safeMessages
@@ -35,7 +35,9 @@ const callLLM = async (messages, systemPrompt) => {
         });
 
         if (!res.ok) {
-            throw new Error(`Groq API Error: ${res.statusText}`);
+            const errText = await res.text();
+            logger.error(`[Groq API Details] Status: ${res.status}, Body: ${errText}`);
+            throw new Error(`Groq API Error: ${res.statusText} - ${errText}`);
         }
 
         const data = await res.json();
