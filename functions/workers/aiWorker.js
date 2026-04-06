@@ -23,12 +23,17 @@ exports.processAiMessage = onMessagePublished({
         const payloadStr = Buffer.from(event.data.message.data, "base64").toString("utf8");
         const payload = JSON.parse(payloadStr);
 
-        const { chatId, userText, lang, token, ownerId } = payload;
+        const { chatId, userText, lang, token, ownerId, action } = payload;
         
-        logger.info(`[AI Worker] Processing message for chatId: ${chatId}.`);
+        logger.info(`[AI Worker] Processing message for chatId: ${chatId}. Action: ${action || 'chat'}`);
 
-        // Generate the personality prompt based on the language
-        const systemPrompt = buildCustomerPrompt(lang);
+        let systemPrompt;
+        if (action === 'generate_post') {
+            systemPrompt = `Sen professional SMM mutaxassis va kopiraytersan. ERSAG kompaniyasining quyidagi mahsuloti haqida Instagram uchun chiroyli, mijozlarni o'ziga tortadigan, sotishga undovchi va emojilarga boy post yozib ber. Post oxirida har doim "Batafsil ma'lumot va buyurtma uchun Direct'ga yozing!" deb qo'sh. Foydalanuvchi yozgan narsa:`;
+        } else {
+            // Generate the personality prompt based on the language
+            systemPrompt = buildCustomerPrompt(lang);
+        }
 
         // Package exactly as standard OpenAI format array
         const messagesArr = [{ role: 'user', content: userText }];

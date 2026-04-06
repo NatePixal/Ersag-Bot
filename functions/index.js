@@ -1,6 +1,7 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const express = require('express');
 const customerWebhookApp = require('./webhooks/customerWebhook');
+const leaderWebhookApp = require('./webhooks/leaderWebhook');
 const miniAppRouter = require('./miniapp/api');
 
 const logger = require('./utils/logger');
@@ -9,7 +10,7 @@ logger.info('Initializing Firebase Functions (Gen 2)...');
 
 // The Three Pillars: Fully Isolated Webhooks
 exports.customerWebhook = onRequest(customerWebhookApp);
-// exports.leaderWebhook = onRequest(leaderWebhookApp);
+exports.leaderWebhook = onRequest(leaderWebhookApp);
 // exports.adminWebhook = onRequest(adminWebhookApp);
 
 // Background Workers
