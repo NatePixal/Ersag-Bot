@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { db } = require('../config/db');
 const { activateSubscription } = require('../services/subscriptionService');
 const logger = require('../utils/logger');
@@ -7,9 +7,7 @@ const logger = require('../utils/logger');
  * Scheduled job: runs every hour to expire leader subscriptions
  * and send 3-day renewal warnings.
  */
-exports.subscriptionJob = functions.pubsub
-    .schedule('every 60 minutes')
-    .onRun(async (context) => {
+exports.checkSubscriptions = onSchedule('every 24 hours', async (event) => {
         logger.info('[SubscriptionJob] Running subscription expiry checks...');
         const now = new Date();
         
