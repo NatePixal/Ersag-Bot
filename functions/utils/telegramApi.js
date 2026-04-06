@@ -73,4 +73,55 @@ const approveChatJoinRequest = async (botToken, chatId, userId) => {
     }
 };
 
-module.exports = { sendMessage, sendDocument, answerCallbackQuery, approveChatJoinRequest };
+/**
+ * Forward a photo (by file_id) to a chat with an optional caption and inline keyboard.
+ * Used to send payment receipts to the master admin.
+ */
+const sendPhoto = async (botToken, chatId, fileId, caption, replyMarkup = null) => {
+    const payload = {
+        chat_id: chatId,
+        photo: fileId,
+        caption,
+        parse_mode: 'HTML'
+    };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            logger.error(`Telegram sendPhoto error: ${errText}`);
+        }
+        return response.ok ? await response.json() : null;
+    } catch (error) {
+        logger.error(`Error sending photo: ${error.message}`);
+        return null;
+    }
+};
+
+/**
+ * Edit a previously sent message text (used to replace approve/decline buttons
+ * with a status line once the admin has acted).
+ */
+const editMessageText = async (botToken, chatId, messageId, text) => {
+    try {
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                message_id: messageId,
+                text,
+                parse_mode: 'HTML'
+            })
+        });
+    } catch (error) {
+        logger.error(`Error editing message: ${error.message}`);
+    }
+};
+
+module.exports = { sendMessage, sendDocument, answerCallbackQuery, approveChatJoinRequest, sendPhoto, editMessageText };
