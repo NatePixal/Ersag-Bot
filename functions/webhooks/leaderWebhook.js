@@ -51,7 +51,7 @@ app.post('/', async (req, res) => {
         if (message.photo) {
             const fileId = message.photo[message.photo.length - 1].file_id;
             
-            await db.collection("payments").add({
+            const paymentRef = await db.collection("payments").add({
                 leader_id: telegramUserId,
                 telegram_id: chatId,
                 file_id: fileId,
@@ -59,7 +59,24 @@ app.post('/', async (req, res) => {
                 timestamp: new Date().toISOString()
             });
 
-            return telegramApi.sendMessage(botToken, chatId, "✅ To'lov cheki qabul qilindi! Administrator tasdiqlashini kuting.", { reply_markup: leaderMenu }); // Will be approved in Pillar 3
+            const paymentId = paymentRef.id;
+
+            // Forward the photo to the Admin
+            const adminToken = env.ADMIN_BOT_TOKEN || env.MASTER_BOT_TOKEN;
+            const adminChatId = env.MASTER_ADMIN_CHAT_ID || env.ADMIN_CHAT_ID;
+            
+            if (adminChatId) {
+                const caption = `🆕 <b>Yangi To'lov!</b>\n\n👤 Kimdan: Leader (ID: <code>${telegramUserId}</code>)\n📝 Ismi: ${leader.name || 'Noma\'lum'}`;
+                const inlineKeyboard = {
+                    inline_keyboard: [[
+                        { text: "✅ Tasdiqlash", callback_data: `approve_${paymentId}` },
+                        { text: "❌ Rad etish", callback_data: `reject_${paymentId}` }
+                    ]]
+                };
+                await telegramApi.sendPhoto(adminToken, adminChatId, fileId, caption, inlineKeyboard);
+            }
+
+            return telegramApi.sendMessage(botToken, chatId, "✅ To'lov cheki qabul qilindi! Administrator tasdiqlashini kuting.", { reply_markup: leaderMenu });
         }
 
         // --- 3. STATE BASED ROUTING (For AI post generation) ---
