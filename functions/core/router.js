@@ -58,10 +58,7 @@ const routeUpdate = async (update, botToken) => {
             return;
         }
 
-        // Intercept billing keywords
-        if (rawText === 'Top up balance' || rawText === '/billing') {
-            return require('../bots/billingBot').run(update, botToken);
-        }
+        // (Billing keyword intercept removed — billing bots use billingAgent via bot_type)
 
         // Quota check
         let hasQuota = true;
@@ -102,8 +99,9 @@ const routeUpdate = async (update, botToken) => {
             logger.info(`[Route: BotType=${botType}] Dispatching for user ${telegramUserId}`);
 
             // ── Billing Bot Brain ────────────────────────────────────────────
+            // Uses the new 100% rule-based billingAgent — zero LLM calls
             if (botType === 'billing') {
-                return require('../bots/billingBot').run(update, botToken);
+                return require('../agents/billingAgent').run(update, botToken);
             }
 
             // ── Support Bot Brain ────────────────────────────────────────────
