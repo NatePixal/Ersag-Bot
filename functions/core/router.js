@@ -3,6 +3,7 @@ const identityResolver = require('./identityResolver');
 const quotaService = require('../services/quotaService');
 const botRegistry = require('../services/botRegistryService');
 const telegramApi = require('../utils/telegramApi');
+const MENUS = require('./menus');
 
 const routeUpdate = async (update, botToken) => {
     try {
@@ -11,8 +12,8 @@ const routeUpdate = async (update, botToken) => {
         
         if (!message && !callbackQuery) return;
 
-        const telegramUserId = message ? message.from.id : callbackQuery.from.id;
-        const text = message ? (message.text || '').toLowerCase() : '';
+        const telegramUserId = String(message ? message.from.id : callbackQuery.from.id);
+        const text = message ? (message.text || '').trim() : '';
         const rawText = message ? message.text || '' : '';
         const cbData = callbackQuery ? callbackQuery.data : null;
 
@@ -20,26 +21,31 @@ const routeUpdate = async (update, botToken) => {
         const env = require('../config/env');
         if (env.MASTER_BOT_TOKEN && botToken === env.MASTER_BOT_TOKEN) {
             logger.info(`[Route: MasterBot] Intercepting traffic and mapping to Leader Hub for user ${telegramUserId}`);
+            // Check if admin commands first
+            if (env.ADMIN_CHAT_ID && telegramUserId === env.ADMIN_CHAT_ID && text.startsWith('/')) {
+                return require('../agents/adminAgent').run(update, botToken);
+            }
             return require('../bots/leaderHubBot').run(update, botToken);
         }
 
         // 2. Resolve user identity for Standard Tenant Bots
-        const role = await identityResolver.resolveRole(telegramUserId, botToken);
+        const role = await identityResolver.resolveRole(telegramUserId, botToken); // will be 'customer'
         const botOwnerId = await botRegistry.getBotOwner(botToken);
+        const lang = identityResolver.resolveLang(message ? message.from : callbackQuery.from);
+        const M = lang === 'ru' ? MENUS.CUSTOMER_RU : MENUS.CUSTOMER_UZ;
         
         logger.info(`[Bot resolved: ${botOwnerId ? botOwnerId : 'unknown'}]`);
-        logger.info(`[Identity: ${role}]`);
+        logger.info(`[Identity: ${role}, Lang: ${lang}]`);
 
-        // Intercept Language and /start global commands
-        if (rawText.startsWith('/start')) {
-            const parts = rawText.split(' ');
+        // ── Step 3: Global /start command ────────────────────────────────────
+        if (text.startsWith('/start')) {
+            const parts = text.split(' ');
             if (parts.length > 1) {
-                const referral = parts[1]; // e.g. L5422685
+                const referral = parts[1];
                 logger.info(`[Referral Catch] User ${telegramUserId} used referral ${referral}`);
-                // Store the referral so we can track which leader brought this customer
                 try {
                     const { db } = require('../config/db');
-                    await db.collection('customer_referrals').doc(String(telegramUserId)).set({
+                    await db.collection('customer_referrals').doc(telegramUserId).set({
                         referral_code: referral,
                         bot_token: botToken,
                         joined_at: new Date().toISOString()
@@ -47,132 +53,110 @@ const routeUpdate = async (update, botToken) => {
                 } catch (e) { logger.error('Failed to store referral', e); }
             }
             
-            // Send language selection
-            const langMarkup = {
-                inline_keyboard: [
-                    [{ text: "🇺🇿 O'zbekcha", callback_data: "lang_uz" }, { text: "🇷🇺 Русский", callback_data: "lang_ru" }]
-                ]
-            };
-            await telegramApi.sendMessage(botToken, telegramUserId, "Assalomu alaykum! / Здравствуйте!\n\nTilni tanlang: / Выберите язык:", langMarkup);
-            logger.info(`[Route: System] Requested language choice from ${telegramUserId}`);
-            return;
+            const botType = await botRegistry.getBotType(botToken);
+            if (botType === 'billing') {
+                return require('../agents/billingAgent').run(update, botToken);
+            } else if (botType === 'support') {
+                return require('../agents/supportAgent').run(update, botToken);
+            } else {
+                return require('../agents/leadAgent').run(update, botToken); // Includes lang prompt
+            }
         }
 
-        // (Billing keyword intercept removed — billing bots use billingAgent via bot_type)
-
-        // Quota check
+        // ── Quota Check (Tenant bots only) ──────────────────────────────────
         let hasQuota = true;
-        if (botOwnerId && role === 'customer') {
-            // Phase 3: Subscription enforcement — check leader subscription FIRST
+        if (botOwnerId) {
             const subscriptionService = require('../services/subscriptionService');
             const subscriptionState = await subscriptionService.checkLeaderAccess(botOwnerId);
             
             if (!subscriptionState.active) {
-                // Leader subscription expired — block AI, show graceful message
-                logger.warn(`[Subscription EXPIRED] Leader ${botOwnerId} — blocking AI for user ${telegramUserId}`);
-                await telegramApi.sendMessage(botToken, telegramUserId,
-                    "⚠️ Bu konsultant hozircha vaqtincha mavjud emas. Iltimos, keyinroq urinib ko'ring.\n\n" +
-                    "This consultant is temporarily unavailable. Please try again later."
+                logger.warn(`[Subscription EXPIRED] Leader ${botOwnerId} — AI blocked`);
+                return telegramApi.sendMessage(botToken, telegramUserId,
+                    "⚠️ Bu konsultant hozircha vaqtincha mavjud emas.\n" +
+                    "This consultant is temporarily unavailable."
                 );
-                return;
             }
-            
-            if (subscriptionState.status === 'grace') {
-                logger.warn(`[Subscription GRACE] Leader ${botOwnerId} is in grace period`);
-                // Still works — leader just gets a gentle warning via the leader bot separately
-            }
-            
             hasQuota = await quotaService.checkQuota(botOwnerId);
-            if (!hasQuota) {
-                logger.warn(`[Quota EXCEEDED] Leader ${botOwnerId} has no quota left.`);
-            } else {
-                logger.info(`[Quota OK] Leader ${botOwnerId} has available quota.`);
+            if (hasQuota) {
                 await quotaService.incrementUsage(botOwnerId);
             }
         }
 
-        // ── Step 3: Multi-Brain Dispatch ────────────────────────────────────────
-        // For customer traffic, check the bot_type FIRST. Each bot type has its
-        // own intended behavior. Only 'sales' bots run the full intent pipeline.
-        if (role === 'customer') {
+        // Callback data routing (for inline buttons)
+        if (callbackQuery) {
             const botType = await botRegistry.getBotType(botToken);
-            logger.info(`[Route: BotType=${botType}] Dispatching for user ${telegramUserId}`);
-
-            // ── Billing Bot Brain ────────────────────────────────────────────
-            // Uses the new 100% rule-based billingAgent — zero LLM calls
-            if (botType === 'billing') {
-                return require('../agents/billingAgent').run(update, botToken);
-            }
-
-            // ── Support Bot Brain ────────────────────────────────────────────
-            if (botType === 'support') {
-                return require('../agents/supportAgent').run(update, botToken);
-            }
-
-            // ── Sales Bot (default) — run full intent pipeline ───────────────
-            // botType === 'sales' OR any unrecognised type falls through here
+            if (botType === 'billing') return require('../agents/billingAgent').run(update, botToken);
+            if (botType === 'support') return require('../agents/supportAgent').run(update, botToken);
+            
+            // Standard callbacks
+            if (cbData.startsWith('lang_')) return require('../agents/leadAgent').run(update, botToken);
+            if (cbData.startsWith('consult_') || cbData === 'cancel_consult') return require('../agents/doctorAgent').run(update, botToken);
+            
+            return telegramApi.answerCallbackQuery(botToken, callbackQuery.id);
         }
 
-        // Intent Classification (Sales / Admin / Leader paths)
-        let intent = role; 
-        if (role === 'customer') {
-            if (!hasQuota) {
-                intent = 'fallback';
-            } else if (require('../agents/productLookupAgent').isProductQuery(rawText)) {
-                intent = 'product';
-            } else if (
-                text.includes('doctor') || text.includes('doktor') || text.includes('konsultatsiya') ||
-                text.includes('konsultasiya') || text.includes('консультация') || text.includes('shifokor')
-            ) {
-                intent = 'doctor';
-            } else if (text.includes('vip') || text.includes('guruh') || text.includes('группа')) {
-                intent = 'vip';
-            } else if (text.includes('qimmat') || text.includes('дорого') || text.includes('expensive')) {
-                intent = 'hesitant';
-            } else if (text.includes('yordam') || text.includes('savol') || text.includes('помощь') || text.includes('narx') || text.includes('цена') || text.includes('dostavka')) {
-                intent = 'help';
-            }
+        // ── Routing by botType ───────────────────────────────────────────────
+        const botType = await botRegistry.getBotType(botToken);
+        if (botType === 'billing') {
+            return require('../agents/billingAgent').run(update, botToken);
+        }
+        if (botType === 'support') {
+            return require('../agents/supportAgent').run(update, botToken);
         }
 
-        // Routing Execution
-        logger.info(`[Route: ${intent}] Routing update from user ${telegramUserId}`);
-
-        switch(intent) {
-            case 'fallback': {
-                const leadService = require('../services/leadService');
-                const name = message ? message.from.first_name : 'Mijoz';
-                await leadService.captureLead(botToken, telegramUserId, { name, phone: 'No quota' });
-                await telegramApi.sendMessage(botToken, telegramUserId, "Rahmat! Operatorlarimiz tez orada siz bilan bog'lanishadi.");
-                return;
-            }
-            case 'doctor': {
-                const leaderCtx = {};
-                if (botOwnerId) {
-                    const leaderDoc = await require('../config/db').db.collection('leaders').doc(String(botOwnerId)).get();
-                    if (leaderDoc.exists) Object.assign(leaderCtx, leaderDoc.data());
-                }
-                return require('../agents/doctorAgent').run(update, botToken, leaderCtx);
-            }
-            case 'product':
-                return require('../agents/productLookupAgent').run(update, botToken);
-            case 'vip': {
-                const vipService = require('../services/vipService');
-                const chatId = message ? message.chat.id : null;
-                if (chatId) await vipService.sendVipInvite(botToken, chatId, telegramUserId);
-                return;
-            }
-            case 'admin':
-                return require('../agents/adminAgent').run(update, botToken);
-            case 'leader':
-                return require('../agents/leaderAgent').run(update, botToken);
-            case 'hesitant':
-                return require('../agents/salesAgent').run(update, botToken);
-            case 'help':
-                return require('../agents/supportAgent').run(update, botToken);
-            case 'customer':
-            default:
+        // ── Sales Agent Menus & Fallbacks (Exact Match Routing) ──────────────
+        
+        // Exact Button Matches
+        switch (text) {
+            case M.PORTAL:
+            case M.CATALOG:
+            case M.VIP:
+            case M.REGISTER:
+            case M.ADMIN:
+            case M.HEALTH:
+            case M.BEAUTY:
+            case M.CLEANING:
+                // Handled natively by leadAgent's static logic
                 return require('../agents/leadAgent').run(update, botToken);
+            
+            case M.POST:
+            case M.CONSULT:
+            case M.DOCTOR:
+                return require('../agents/doctorAgent').run(update, botToken);
+                
+            case M.PRODUCT_CODE:
+                return telegramApi.sendMessage(botToken, telegramUserId, "Mahsulot kodini kiriting (Masalan, ERG-201):");
         }
+
+        // No quota for free text → Fallback lead conversion
+        if (!hasQuota && text) {
+            const leadService = require('../services/leadService');
+            const name = message ? message.from.first_name : 'Mijoz';
+            await leadService.captureLead(botToken, telegramUserId, { name, phone: 'Limiti tugagan' });
+            return telegramApi.sendMessage(botToken, telegramUserId, "Rahmat! Operatorlarimiz tez orada siz bilan bog'lanishadi.");
+        }
+
+        // Handlers via Regex/Code Match
+        if (require('../agents/productLookupAgent').isProductQuery(text)) {
+            return require('../agents/productLookupAgent').run(update, botToken);
+        }
+
+        if (message.contact || message.photo) {
+            return require('../agents/leadAgent').run(update, botToken);
+        }
+
+        // Free text falls through to Sales AI
+        logger.info(`[Route: AI Sales] Free text from user ${telegramUserId} passing to AI`);
+        
+        // New integration using customer.prompt.js
+        const { buildCustomerPrompt } = require('../prompts/customer.prompt.js');
+        const aiService = require('../agents/aiService');
+        const systemPrompt = buildCustomerPrompt(lang);
+        const messagesArr = [{ role: 'user', content: text }];
+        
+        const aiResponse = await aiService.callLLM(messagesArr, systemPrompt);
+        await telegramApi.sendMessage(botToken, telegramUserId, aiResponse);
+        
     } catch (error) {
         logger.error('Error in routeUpdate:', error);
     }
