@@ -14,24 +14,27 @@ const run = async (update, botToken) => {
     if (!message) return;
     const chatId = message.chat.id;
     const text = message.text || '';
+    const textLower = text.toLowerCase();
     const leaderId = String(message.from.id);
 
-    if (text === '🎛️ Boshqaruv Paneli' || text === '/start') {
-        const replyMarkup = {
-            inline_keyboard: [[{text: "⚡ Control Panel (Web)", web_app: {url: "https://ersag-ai-bot.web.app/leader.html"}}]]
-        };
-        await telegramApi.sendMessage(botToken, chatId, "Sotuvchi boshqaruv paneliga xush kelibsiz. Tugmani bosing:", replyMarkup);
-    } else if (text === 'Admin bilan boglanish') {
-        await telegramApi.sendMessage(botToken, chatId, "Admin: @MSU_Berdibekov");
-    } else {
+    if (textLower === '/start' || textLower === 'menyu') {
         const replyMarkup = {
             keyboard: [
-                [{text: "🎛️ Boshqaruv Paneli"}],
-                [{text: "Admin bilan boglanish"}]
+                [{ text: "🎛️ Boshqaruv Paneli" }],
+                [{ text: "📞 Admin bilan boglanish" }]
             ],
             resize_keyboard: true
         };
-        await telegramApi.sendMessage(botToken, chatId, "Platformaga kiring:", replyMarkup);
+        await telegramApi.sendMessage(botToken, chatId, "Sotuvchi boshqaruv paneliga xush kelibsiz! Quyidagi menyu orqali harakat qiling:", replyMarkup);
+    } else if (textLower.includes('boshqaruv paneli')) {
+        const replyMarkup = {
+            inline_keyboard: [[{ text: "⚡ Control Panel (Web)", web_app: { url: "https://ersag-ai-bot.web.app/leader.html" } }]]
+        };
+        await telegramApi.sendMessage(botToken, chatId, "Sotuvchi boshqaruv paneliga xush kelibsiz. Tugmani bosing:", replyMarkup);
+    } else if (textLower.includes('admin bilan boglanish')) {
+        await telegramApi.sendMessage(botToken, chatId, "📞 Admin: @MSU_Berdibekov");
+    } else {
+        await telegramApi.sendMessage(botToken, chatId, "Menyu uchun /start bosing yoki quyidagi tugmalardan foydalaning.");
     }
 };
 

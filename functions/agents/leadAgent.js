@@ -48,7 +48,13 @@ const run = async (update, botToken) => {
     const isLeadCaptured = customer?.is_lead_captured || false;
 
     // Handle standard static buttons first
-    if (['Ersag Portal', 'Katalog', 'VIP group', 'Admin bilan aloqa', 'Ulashish', "Go'zallik", "Sog'liq", 'Tozalash', 'Bepul konsultatsiya', 'Ro\'yxatdan o\'tish'].includes(text)) {
+    if ([
+        'Ersag Portal', 'Katalog', 'VIP group', 'Admin bilan aloqa', 'Ulashish',
+        "Go'zallik", "Sog'liq", 'Tozalash', 'Bepul konsultatsiya',
+        "Ro'yxatdan o'tish", '👨‍⚕️ Doctor Ersag', '🔍 Mahsulot kodi',
+        '🌟 VIP group', '✅ Ro\'yxatdan o\'tish', '🛍️ Ersag Portal', '📦 Katalog',
+        "💄 Go'zallik", "💪 Sog'liq", '🏠 Tozalash', '📞 Admin bilan aloqa'
+    ].includes(text)) {
         
         // Lead Dam Enforcement: Block access to certain features if not collected
         if (!isLeadCaptured && ['Ersag Portal', 'Katalog', "Go'zallik", "Sog'liq", 'Tozalash'].includes(text)) {
@@ -94,7 +100,7 @@ const sendMainMenu = async (botToken, chatId, lang) => {
             [{ text: "💄 Go'zallik" }, { text: "💪 Sog'liq" }, { text: "🏠 Tozalash" }],
             [{ text: "👨‍⚕️ Doctor Ersag" }, { text: "🔍 Mahsulot kodi" }],
             [{ text: "🌟 VIP group" }, { text: "✅ Ro'yxatdan o'tish" }],
-            [{ text: "📞 Admin", url: "https://t.me/MSU_Berdibekov" }]
+            [{ text: "📞 Admin bilan aloqa" }]
         ],
         resize_keyboard: true
     };
@@ -102,8 +108,10 @@ const sendMainMenu = async (botToken, chatId, lang) => {
     await telegramApi.sendMessage(botToken, chatId, textMsg, replyMarkup);
 };
 
-const handleMenuAction = async (botToken, chatId, option, lang) => {
-    switch (option) {
+const handleMenuAction = async (botToken, chatId, text, lang) => {
+    // Normalise — strip emoji prefix for matching
+    const key = text.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F\u20E3\s]+/u, '').trim();
+    switch (key) {
         case 'Ersag Portal':
             await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Нажмите на кнопку web-app для входа на портал Ersag." : "Ersag portaliga kirish uchun web-app tugmasini bosing.");
             break;
@@ -111,10 +119,19 @@ const handleMenuAction = async (botToken, chatId, option, lang) => {
             await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Все продукты здесь: 👉 Каталог" : "Barcha mahsulotlar bu yerda: 👉 Katalog");
             break;
         case 'Admin bilan aloqa':
-            await telegramApi.sendMessage(botToken, chatId, "Admin bilan bog'lanish uchun / Связаться с админом: @MSU_Berdibekov");
+            await telegramApi.sendMessage(botToken, chatId, "Admin: @MSU_Berdibekov");
             break;
         case 'Ro\'yxatdan o\'tish':
             await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Регистрация бесплатна и дает 20% скидку! Воспользуйтесь сайтом." : "A'zo bo'lish bepul va 20% chegirma beradi! Saytdan foydalaning.");
+            break;
+        case 'VIP group':
+            await require('../services/vipService').sendVipInvite(botToken, chatId, chatId);
+            break;
+        case 'Doctor Ersag':
+            await require('./doctorAgent').showSymptomSelector(botToken, chatId);
+            break;
+        case 'Mahsulot kodi':
+            await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Введите код продукта (например ERG-101):" : "Mahsulot kodini kiriting (masalan ERG-101):");
             break;
         default:
             await telegramApi.sendMessage(botToken, chatId, lang === 'ru' ? "Ваш выбор принят." : "Tanlovingiz qabul qilindi.");

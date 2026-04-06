@@ -8,15 +8,23 @@ const callLLM = async (messages, systemPrompt) => {
     }
 
     try {
+        // 1. Ensure systemPrompt is never falsy
+        const safeSystemPrompt = systemPrompt || 'You are a helpful assistant.';
+
+        // 2. Filter out messages with empty/null/undefined content
+        const safeMessages = (Array.isArray(messages) ? messages : [])
+            .filter(m => m && typeof m.content === 'string' && m.content.trim() !== '');
+
         const payload = {
             model: "llama3-8b-8192",
             messages: [
-                { role: "system", content: systemPrompt },
-                ...messages
+                { role: "system", content: safeSystemPrompt },
+                ...safeMessages
             ]
         };
 
-        logger.info('[AI called] Sending request to Groq LLC...');
+        // 3. Log full payload before sending so we can debug Bad Request errors
+        logger.info('[AI called] Sending request to Groq LLC. Payload: ' + JSON.stringify(payload));
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {

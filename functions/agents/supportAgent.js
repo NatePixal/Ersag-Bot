@@ -32,6 +32,47 @@ const run = async (update, botToken) => {
         return;
     }
 
+    // Handle Support menu buttons explicitly
+    if (rawText === '❓ FAQ — Savollar') {
+        await telegramApi.sendMessage(botToken, chatId,
+            "❓ *Ko'p beriladigan savollar:*\n\n" +
+            "• Narx: Mahsulotlar 50,000 so'mdan\n" +
+            "• Chegirma: A'zo bo'lsangiz 20%\n" +
+            "• Yetkazib berish: Toshkent 1-2 kun\n" +
+            "• Halol sertifikat: Ha, barchasi\n" +
+            "• Qaytarish: 14 kun ichida\n\n" +
+            "Batafsil savol uchun: @MSU_Berdibekov"
+        );
+        return;
+    }
+
+    if (rawText === '💬 Narx va chegirma') {
+        await telegramApi.sendMessage(botToken, chatId,
+            "💬 *Narx va chegirma:*\n\n" +
+            "📦 Mahsulotlar 50,000 so'mdan boshlanadi.\n" +
+            "🎁 A'zo bo'lsangiz darhol *20% chegirma* olasiz!\n" +
+            "Ro'yxatdan o'tish — bepul.\n\n" +
+            "To'liq katalog va narxlar: @MSU_Berdibekov"
+        );
+        return;
+    }
+
+    if (rawText === '🚚 Yetkazib berish') {
+        await telegramApi.sendMessage(botToken, chatId,
+            "🚚 *Yetkazib berish:*\n\n" +
+            "🏙️ Toshkent: 1-2 ish kunida\n" +
+            "🗺️ Viloyatlar: 3-5 ish kunida\n" +
+            "📦 Minimal buyurtma yo'q.\n\n" +
+            "Buyurtma berish: @MSU_Berdibekov"
+        );
+        return;
+    }
+
+    if (rawText === "📞 Admin bilan bog'lanish") {
+        await telegramApi.sendMessage(botToken, chatId, "📞 Admin: @MSU_Berdibekov");
+        return;
+    }
+
     // FAQ: Track Order stub
     if (text.includes('track') || text.includes('buyurtma') || text.includes('заказ') || text.includes('kuzat')) {
         await telegramApi.sendMessage(botToken, chatId,

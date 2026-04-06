@@ -40,7 +40,10 @@ const run = async (update, botToken) => {
         return;
     }
 
-    if (text === 'Top up balance' || text === '/billing' || text === '/start') {
+    if (
+        text === "💳 Balansni to'ldirish" || text === 'Top up balance' ||
+        text === '/billing' || rawText.startsWith('/start')
+    ) {
         // Check current subscription status for context
         const subState = await subscriptionService.checkLeaderAccess(userId);
         const statusNote = subState.status === 'active'
@@ -64,6 +67,22 @@ const run = async (update, botToken) => {
             `To'lov qilganingizdan so'ng *chek rasmini* shu yerga yuboring 📸`,
             replyMarkup
         );
+        return;
+    }
+
+    if (text === "📜 To'lov tarixi") {
+        await telegramApi.sendMessage(botToken, chatId, "📜 To'lov tarixi hozircha qo'lda boshqariladi. Admin bilan bog'laning: @MSU_Berdibekov");
+        return;
+    }
+
+    if (text === '📸 Chek yuborish') {
+        await telegramApi.sendMessage(botToken, chatId, "📸 Chek rasmini shu yerga yuboring — admin 24 soat ichida tasdiqlaydi.");
+        return;
+    }
+
+    if (text === "📞 Admin bilan bog'lanish") {
+        await telegramApi.sendMessage(botToken, chatId, "Admin: @MSU_Berdibekov");
+        return;
     }
 };
 
