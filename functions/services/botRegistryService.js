@@ -14,26 +14,28 @@ const registerBot = async (botToken, leaderId, botType = 'sales') => {
 
     const webhookUuid = crypto.randomUUID();
     
-    // Auto web-hook binding natively
+    // Pillar 1: Multi-tenant webhook binding
     const env = require('../config/env');
-    const functionsUrl = env.TELEGRAM_WEBHOOK_URL || 'https://us-central1-YOURPROJECT.cloudfunctions.net';
+    const project = process.env.GCLOUD_PROJECT || 'ersag-ai-bot';
+    const region = 'us-central1'; // Default Firebase Functions region
+    const functionsUrl = env.TELEGRAM_WEBHOOK_URL || `https://${region}-${project}.cloudfunctions.net`;
     const cleanUrl = functionsUrl.endsWith('/') ? functionsUrl.slice(0, -1) : functionsUrl;
     
+    const webhookUrl = `${cleanUrl}/telegramGateway?id=${webhookUuid}`;
+    
     try {
-        const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook?url=${cleanUrl}/webhook/${botToken}`);
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
         if (!response.ok) {
-            logger.error(`Native SetWebhook Failed for ${botToken}`);
-        } else {
-            logger.info(`Successfully bound native webhook for ${botToken}`);
+            logger.error(`SetWebhook Failed: ${botToken}`);
         }
     } catch (err) {
-        logger.error(`Natively hooking webhook errored`, err);
+        logger.error(`Error setting webhook`, err);
     }
     
     const botData = {
         bot_token: botToken,
         leader_id: leaderId,
-        bot_type: botType,
+        bot_type: botType, // sales, billing, support
         status: 'active',
         webhook_uuid: webhookUuid,
         created_at: new Date().toISOString()

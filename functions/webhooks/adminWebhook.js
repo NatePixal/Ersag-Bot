@@ -3,11 +3,18 @@ const logger = require('../utils/logger');
 const telegramApi = require('../utils/telegramApi');
 const env = require('../config/env');
 const { db } = require('../config/db');
+const subscriptionService = require('../services/subscriptionService');
+const leadService = require('../services/leadService');
+const notificationService = require('../services/notificationService');
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
 
-// Admin Webhook catches operations for the Master Admin panel.
+/**
+ * 🛡️ Pillar 3: System Control (adminWebhook)
+ * Private command center for the Platform Owner to manage billing.
+ */
 app.post('/', async (req, res) => {
     res.status(200).send("OK");
 
@@ -21,81 +28,55 @@ app.post('/', async (req, res) => {
         const messageId = cq.message.message_id;
 
         const ADMIN_TOKEN = env.ADMIN_BOT_TOKEN || env.MASTER_BOT_TOKEN;
-        const LEADER_TOKEN = env.MASTER_BOT_TOKEN; // To notify the leader
+        const MASTER_BOT_TOKEN = env.MASTER_BOT_TOKEN;
 
-        // Acknowledge the callback immediately
+        // Acknowledge the callback
         await telegramApi.answerCallbackQuery(ADMIN_TOKEN, cq.id);
 
-        // --- PAYMENT APPROVAL PIPELINE ---
+        // --- PAYMENT APPROVAL: "The Flush" Protocol ---
         if (data.startsWith("approve_")) {
-            const paymentId = data.replace("approve_", "");
-            const paymentRef = db.collection("payments").doc(paymentId);
-            const paymentSnap = await paymentRef.get();
+            const leaderId = data.replace("approve_", "");
             
-            if (!paymentSnap.exists) {
-                return telegramApi.sendMessage(ADMIN_TOKEN, adminChatId, "❌ Diqqat: Bu to'lov topilmadi yoki o'chirilgan.");
-            }
+            // 1. Activate Subscription (Pillar 3 logic: Auto-extend by 30 days)
+            const newExpiry = await subscriptionService.activateSubscription(leaderId);
             
-            const paymentData = paymentSnap.data();
-            const leaderId = paymentData.leader_id;
+            // update Admin UI
+            await telegramApi.editMessageText(ADMIN_TOKEN, adminChatId, messageId, 
+                `✅ Tasdiqlandi!\nLeader (ID: ${leaderId}) obunasi faollashdi.\nTugash sanasi: ${newExpiry.toLocaleDateString('uz-UZ')}`);
 
-            // 1. Activate Subscription (Add 30 Days)
-            const now = new Date();
-            const ms30 = 30 * 24 * 60 * 60 * 1000;
-            const newExpiry = new Date(now.getTime() + ms30);
+            // 2. Notify the Leader via Master Bot
+            await telegramApi.sendMessage(MASTER_BOT_TOKEN, leaderId, 
+                `🎉 *Tabriklaymiz!* To'lovingiz tasdiqlandi.\n\n` +
+                `Obuna muddati: *${newExpiry.toLocaleDateString('uz-UZ')}* gacha uzaytirildi.\n` +
+                `Barcha qulflangan leadlar hozir guruhingizga yuboriladi! 🚀`);
 
-            await db.collection("leaders").doc(leaderId).update({
-                subscription_active: true,
-                expiry_date: newExpiry.toISOString()
-            });
-            await paymentRef.update({ status: "approved" });
-
-            // Remove buttons from Admin's message to prevent double-clicks
-            await telegramApi.editMessageText(ADMIN_TOKEN, adminChatId, messageId, `✅ Tasdiqlandi!\nLeader (ID: ${leaderId}) obunasi 30 kunga faollashdi.`);
-
-            // 2. Notify the Leader via the Leader Bot
-            const leaderDoc = await db.collection("leaders").doc(leaderId).get();
-            const leaderData = leaderDoc.data();
+            // 3. "THE FLUSH": Empty the pending vault directly into their group
+            const pendingLeads = await leadService.getPendingLeads(leaderId);
             
-            if (leaderData && leaderData.telegram_id) {
-                await telegramApi.sendMessage(LEADER_TOKEN, leaderData.telegram_id, `🎉 Tabriklaymiz! To'lovingiz tasdiqlandi. Boshqaruv paneli orqali barcha qulayliklardan foydalanishingiz mumkin.`);
-            }
-
-            // 3. THE FLUSH: Empty the pending_leads Dam directly into their group/bot
-            const pendingRef = await db.collection("pending_leads").where("leader_code", "==", leaderId).get();
-            
-            if (!pendingRef.empty && leaderData.admin_group_id) {
-                let flushMsg = `🚨 *YANGI LEADLAR (KUTISH ZALIDAN)*\n\n`;
-                const batch = db.batch();
+            if (pendingLeads.length > 0) {
+                const flushId = `flush-${leaderId}-${crypto.randomUUID().slice(0,8)}`;
                 
-                pendingRef.forEach(doc => {
-                    const l = doc.data();
-                    const phoneFormatted = l.phone ? l.phone : "Noma'lum raqam";
-                    flushMsg += `👤 Ism: ${l.firstName || 'Mijoz'}\n📞 Telefon: ${phoneFormatted}\n\n`;
-                    batch.delete(doc.ref); // Schedule deletion from pending vault
-                });
-
-                // Send the collected leads to the Leader's Group!
-                await telegramApi.sendMessage(LEADER_TOKEN, leaderData.admin_group_id, flushMsg);
-                await batch.commit(); // Execute deletion
+                // Update database states in transaction
+                await leadService.flushPendingLeads(leaderId, flushId);
+                
+                // Send captured leads to the leader's group
+                for (const lead of pendingLeads) {
+                    await notificationService.notifyLeaderNewLead(MASTER_BOT_TOKEN, leaderId, lead);
+                }
+                
+                logger.info(`[Admin] Flushed ${pendingLeads.length} leads for leader ${leaderId}`);
             }
             return;
         }
 
-        // --- PAYMENT REJECTION LOGIC ---
+        // --- PAYMENT REJECTION ---
         if (data.startsWith("reject_")) {
-            const paymentId = data.replace("reject_", "");
-            await db.collection("payments").doc(paymentId).update({ status: "rejected" });
+            const leaderId = data.replace("reject_", "");
             
-            // Remove buttons from Admin's message
-            await telegramApi.editMessageText(ADMIN_TOKEN, adminChatId, messageId, `❌ To'lov rad etildi.`);
+            await telegramApi.editMessageText(ADMIN_TOKEN, adminChatId, messageId, `❌ To'lov rad etildi (Leader ID: ${leaderId}).`);
             
-            // Notify the leader
-            const paymentSnap = await db.collection("payments").doc(paymentId).get();
-            if (paymentSnap.exists) {
-                const pData = paymentSnap.data();
-                await telegramApi.sendMessage(LEADER_TOKEN, pData.leader_id, `❌ Siz yuborgan to'lov cheki administrator tomonidan rad etildi. Iltimos qayta urinib ko'ring yoki murojaat qiling.`);
-            }
+            await telegramApi.sendMessage(MASTER_BOT_TOKEN, leaderId, 
+                `❌ Siz yuborgan to'lov cheki rad etildi.\n\nIltimos, qayta yuboring yoki admin bilan bog'laning: @MSU_Berdibekov`);
             return;
         }
 

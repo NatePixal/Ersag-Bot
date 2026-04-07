@@ -9,7 +9,7 @@ router.get('/profile', async (req, res) => {
     const leaderId = String(req.telegramUser.id);
     
     try {
-        const botQuery = await db.collection('bot_registry')
+        const botQuery = await db.collection('bots')
             .where('leader_id', '==', leaderId)
             .limit(1)
             .get();

@@ -67,21 +67,17 @@ router.get('/catalog', async (req, res) => {
         const sheetProducts = await sheetsService.getCatalog();
         
         if (sheetProducts && sheetProducts.length > 0) {
-            return res.json({ status: 'success', source: 'sheets', products: sheetProducts });
+            return res.json(sheetProducts);
         }
         
         // Fallback to hardcoded
-        res.json({
-            status: 'success',
-            source: 'local',
-            products: [
-                { code: 'ERG-101', name: 'Immune Boost', price: '85,000 UZS', category: "Sog'liq", description: 'Immunitetni kuchaytirish' },
-                { code: 'ERG-201', name: 'Bio Shampun', price: '65,000 UZS', category: "Go'zallik", description: 'Soch to\'kilishiga qarshi' },
-                { code: 'ERG-301', name: 'Kollagen Krem', price: '95,000 UZS', category: "Go'zallik", description: 'Terini mustahkamlash' },
-                { code: 'ERG-401', name: 'SlimTea', price: '55,000 UZS', category: "Sog'liq", description: 'Vazn nazorati' },
-                { code: 'ERG-501', name: 'Eco Clean', price: '45,000 UZS', category: 'Uy tozalash', description: 'Kimyosiz tozalovchi' }
-            ]
-        });
+        res.json([
+            { code: 'ERG-101', name: 'Immune Boost', price: '85,000 UZS', category: "Sog'liq", description: 'Immunitetni kuchaytirish' },
+            { code: 'ERG-201', name: 'Bio Shampun', price: '65,000 UZS', category: "Go'zallik", description: 'Soch to\'kilishiga qarshi' },
+            { code: 'ERG-301', name: 'Kollagen Krem', price: '95,000 UZS', category: "Go'zallik", description: 'Terini mustahkamlash' },
+            { code: 'ERG-401', name: 'SlimTea', price: '55,000 UZS', category: "Sog'liq", description: 'Vazn nazorati' },
+            { code: 'ERG-501', name: 'Eco Clean', price: '45,000 UZS', category: 'Uy tozalash', description: 'Kimyosiz tozalovchi' }
+        ]);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch catalog' });
     }

@@ -7,8 +7,8 @@ const env = require('../config/env');
 // Link to the real mini app for leaders
 const WEB_APP_URL = env.TELEGRAM_WEBHOOK_URL ? `${env.TELEGRAM_WEBHOOK_URL}/leader.html` : "https://ersag-ai-bot.web.app/leader.html";
 
-const run = async (update, botToken) => {
-    const message = update.message;
+const handleUpdate = async (body, botDoc, botToken) => {
+    const message = body.message;
     if (!message) return;
     
     const chatId = message.chat.id;
@@ -144,4 +144,4 @@ const handleAITools = async (botToken, chatId) => {
     );
 };
 
-module.exports = { run };
+module.exports = { handleUpdate };
