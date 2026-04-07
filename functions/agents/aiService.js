@@ -1,52 +1,38 @@
+// functions/agents/aiService.js
+const { Groq } = require('groq-sdk');
 const env = require('../config/env');
-const logger = require('../utils/logger');
+const { db } = require('../config/db');
 
-const callLLM = async (messages, systemPrompt) => {
-    if (!env.GROQ_API_KEY) {
-        logger.warn('GROQ_API_KEY is missing. Using stub response.');
-        return "I am an AI assistant. Please configure GROQ_API_KEY to enable chat.";
-    }
+const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 
-    try {
-        // 1. Ensure systemPrompt is never falsy
-        const safeSystemPrompt = systemPrompt || 'You are a helpful assistant.';
+async function generateResponse(userText, language, leaderId) {
+    // 1. Search for relevant product info in Firestore
+    const snapshot = await db.collection('knowledge_base')
+        .where('searchKeywords', '>=', userText.toLowerCase().split(' ')[0])
+        .limit(3).get();
 
-        // 2. Filter out messages with empty/null/undefined content
-        const safeMessages = (Array.isArray(messages) ? messages : [])
-            .filter(m => m && typeof m.content === 'string' && m.content.trim() !== '');
+    let context = "";
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        context += `Product: ${data.name}. Info: ${data.description}. Usage: ${data.usage}
+`;
+    });
 
-        const payload = {
-            model: "llama-3.1-8b-instant",
-            messages: [
-                { role: "system", content: safeSystemPrompt },
-                ...safeMessages
-            ]
-        };
-
-        // 3. Log full payload before sending so we can debug Bad Request errors
-        logger.info('[AI called] Sending request to Groq LLC. Payload: ' + JSON.stringify(payload));
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${env.GROQ_API_KEY}`,
-                "Content-Type": "application/json"
+    // 2. Call Groq AI
+    const completion = await groq.chat.completions.create({
+        messages: [
+            {
+                role: "system",
+                content: `You are an expert Ersag Consultant. Use this context: ${context}. 
+                Answer ONLY in ${language === 'uz' ? 'Uzbek' : 'Russian'}. 
+                Always encourage registration with Sponsor ID.`
             },
-            body: JSON.stringify(payload)
-        });
+            { role: "user", content: userText }
+        ],
+        model: "llama3-8b-8192",
+    });
 
-        if (!res.ok) {
-            const errText = await res.text();
-            logger.error(`[Groq API Details] Status: ${res.status}, Body: ${errText}`);
-            throw new Error(`Groq API Error: ${res.statusText} - ${errText}`);
-        }
+    return completion.choices[0].message.content;
+}
 
-        const data = await res.json();
-        logger.info('[Reply sent] AI responded successfully.');
-        return data.choices[0].message.content;
-    } catch (error) {
-        logger.error('Error calling AI service', error);
-        return "Uzr, xatolik yuz berdi. Iltimos, qayta urinib ko'ring.";
-    }
-};
-
-module.exports = { callLLM };
+module.exports = { generateResponse };

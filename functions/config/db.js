@@ -1,10 +1,14 @@
+// functions/config/db.js
 const admin = require('firebase-admin');
 
-// Prevent multiple initializations in Firebase Functions
+// Initialize only once
 if (!admin.apps.length) {
     admin.initializeApp();
 }
 
 const db = admin.firestore();
 
-module.exports = { admin, db };
+// Helpful shortcut for timestamps
+const Timestamp = admin.firestore.Timestamp;
+
+module.exports = { db, admin, Timestamp };

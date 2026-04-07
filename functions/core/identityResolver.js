@@ -1,36 +1,45 @@
-const botRegistryService = require('../services/botRegistryService');
+// functions/core/identityResolver.js
 const env = require('../config/env');
-const logger = require('../utils/logger');
+const { db } = require('../config/db');
 
-const resolveRole = async (telegramUserId, botToken) => {
-    logger.info(`Resolving role for user ${telegramUserId} on bot ${botToken.substring(0, 8)}...`);
-
+/**
+ * Determines the role of the user and which bot context they are in.
+ */
+async function resolveIdentity(telegramUserId, botToken) {
     const isMasterBot = (botToken === env.MASTER_BOT_TOKEN);
+    const userId = String(telegramUserId);
 
-    // 1. Check Admin (Only valid on the Master Bot)
-    if (isMasterBot && env.ADMIN_CHAT_ID && String(telegramUserId) === String(env.ADMIN_CHAT_ID)) {
-        return 'admin';
+    // 1. Check if user is the MASTER ADMIN
+    if (userId === env.ADMIN_TELEGRAM_ID) {
+        return { role: 'admin', botType: isMasterBot ? 'master' : 'customer' };
     }
 
-    // 2. Check Leader (Only valid on the Master Bot)
-    if (isMasterBot) {
-        const { db } = require('../config/db');
-        const leaderDoc = await db.collection('leaders').doc(String(telegramUserId)).get();
-        if (leaderDoc.exists) {
-            return 'leader';
-        }
+    // 2. Check if user is a REGISTERED LEADER
+    const leaderDoc = await db.collection('leaders').doc(userId).get();
+    if (leaderDoc.exists) {
+        const leaderData = leaderDoc.data();
+        
+        // If they are a leader talking to their OWN bot, or the Master Bot
+        return { 
+            role: 'leader', 
+            status: leaderData.account_status || 'active',
+            data: leaderData 
+        };
     }
 
-    // 3. Default to Customer (All traffic on Tenant bots defaults to customer)
-    return 'customer';
-};
+    // 3. Default to CUSTOMER
+    // We also find which leader owns this specific bot
+    const botDoc = await db.collection('bots').where('token', '==', botToken).limit(1).get();
+    let ownerId = env.ADMIN_TELEGRAM_ID; // Default to you if bot is unknown
+    
+    if (!botDoc.empty) {
+        ownerId = botDoc.docs[0].data().ownerId;
+    }
 
-const resolveLang = (telegramUser) => {
-    // Currently relying mostly on user selection or tg language_code
-    return telegramUser?.language_code === 'ru' ? 'ru' : 'uz';
-};
+    return { 
+        role: 'customer', 
+        ownerId: ownerId 
+    };
+}
 
-module.exports = {
-    resolveRole,
-    resolveLang
-};
+module.exports = { resolveIdentity };

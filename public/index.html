@@ -107,7 +107,7 @@
     </style>
 </head>
 <body class="bg-surface font-body text-gray-800 antialiased">
-    <!-- ═══════════════════════════════════ HEADER ═══════════════════════════════════ -->
+
     <header class="fixed top-0 w-full z-50 bg-white/85 backdrop-blur-md border-b border-gray-100 flex justify-between items-center px-5 h-14">
         <div class="flex items-center gap-2">
             <div class="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
@@ -121,12 +121,9 @@
         </div>
     </header>
 
-    <!-- ═══════════════════════════════════ PAGES ════════════════════════════════════ -->
     <main class="pt-16 pb-24">
 
-        <!-- ─── HOME ─── -->
         <section id="page-home" class="page page-active">
-            <!-- Hero gradient blob -->
             <div class="relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-green-50 opacity-80"></div>
                 <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-100 rounded-full -translate-y-32 translate-x-32 opacity-50"></div>
@@ -140,7 +137,6 @@
                 </div>
             </div>
 
-            <!-- Feature pills -->
             <div class="px-5 mt-2">
                 <div class="grid grid-cols-3 gap-3">
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 text-center shadow-sm">
@@ -158,7 +154,6 @@
                 </div>
             </div>
 
-            <!-- Quick nav cards -->
             <div class="px-5 mt-4 space-y-3">
                 <button onclick="showPage('lessons')" class="w-full bg-primary text-white rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left shadow-md shadow-green-900/15">
                     <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
@@ -183,21 +178,27 @@
             </div>
         </section>
 
-        <!-- ─── SHOP ─── -->
         <section id="page-shop" class="page px-5 pt-2">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xl font-bold font-headline text-primary" data-i18n="SHOP_TITLE">Katalog</h3>
                 <span id="product-count" class="text-xs text-gray-400 font-medium"></span>
             </div>
 
-            <!-- Category filter bar -->
-            <div class="flex gap-2 overflow-x-auto pb-3 no-scroll mb-2" id="filter-bar">
-                <button onclick="setFilter('all')"        id="filter-all"      class="filter-btn active-filter shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all" data-i18n-filter="FILTER_ALL">Barchasi</button>
-                <button onclick="setFilter('Sog\u2019liq')"   id="filter-health"  class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">💊 Sog'liq</button>
-                <button onclick="setFilter('Go\u2019zallik')"  id="filter-beauty"  class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">🌸 Go'zallik</button>
-                <button onclick="setFilter('Uy tozalash')" id="filter-cleaning" class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">🏠 Tozalash</button>
+            <div class="relative mb-4">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:18px">search</span>
+                <input type="text" id="searchInput" placeholder="Mahsulot qidirish..." 
+                       class="w-full bg-white border border-gray-100 rounded-2xl py-3 pl-10 pr-4 text-sm focus:ring-primary focus:border-primary shadow-sm transition-all outline-none">
             </div>
 
+            <div class="flex gap-2 overflow-x-auto pb-3 no-scroll mb-2" id="filter-bar">
+    <button onclick="setFilter('all')" id="filter-all" class="filter-btn active-filter shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all" data-i18n="FILTER_ALL">Barchasi</button>
+    <button onclick="setFilter('Sog\u2019liq')" id="filter-health" class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">💊 Sog'liq</button>
+    <button onclick="setFilter('Go\u2019zallik')" id="filter-beauty" class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">🌸 Go'zallik</button>
+    <button onclick="setFilter('Uy tozalash')" id="filter-cleaning" class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">🏠 Tozalash</button>
+    
+    <button onclick="setFilter('Parfüm')" id="filter-parfum" class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">✨ Parfüm</button>
+    <button onclick="setFilter('Kosmetika')" id="filter-kosmetika" class="filter-btn shrink-0 px-4 py-1.5 rounded-full text-[11px] font-bold border transition-all">💄 Kosmetika</button>
+</div>
             <div id="product-grid">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="skeleton h-56"></div>
@@ -213,169 +214,417 @@
             </div>
         </section>
 
-        <!-- ─── LESSONS ─── -->
         <section id="page-lessons" class="page px-5 pt-2">
             <h3 class="text-xl font-bold font-headline text-primary mb-1" data-i18n="LESSONS_TITLE">Biznes Maktabi</h3>
             <p class="text-xs text-gray-500 mb-5" data-i18n="LESSONS_SUB">Videoni ko'ring va jamoamizga qo'shiling 🌿</p>
 
-            <!-- Video 1 -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-4">
                 <div class="p-4">
                     <span class="text-[9px] font-black text-primary uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full">1-Dars</span>
                     <h4 class="font-bold text-sm mt-2 mb-3" data-i18n="VID_1_TITLE">Ersag kompaniyasi nima?</h4>
-                    <!-- Replace VIDEO_ID_1 with your actual YouTube video ID -->
                     <div class="video-wrap">
-                        <iframe
-                            src="https://www.youtube.com/embed/VIDEO_ID_1?rel=0&modestbranding=1"
-                            frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen
-                            loading="lazy"
-                            onload="markVideo(1)">
-                        </iframe>
+                        <iframe src="https://www.youtube.com/embed/VIDEO_ID_1?rel=0&modestbranding=1" frameborder="0" allowfullscreen loading="lazy"></iframe>
                     </div>
                 </div>
             </div>
 
-            <!-- Video 2 -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-4">
                 <div class="p-4">
                     <span class="text-[9px] font-black text-primary uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full">2-Dars</span>
                     <h4 class="font-bold text-sm mt-2 mb-3" data-i18n="VID_2_TITLE">Marketing rejasi va daromad</h4>
-                    <!-- Replace VIDEO_ID_2 with your actual YouTube video ID -->
                     <div class="video-wrap">
-                        <iframe
-                            src="https://www.youtube.com/embed/VIDEO_ID_2?rel=0&modestbranding=1"
-                            frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen
-                            loading="lazy"
-                            onload="markVideo(2)">
-                        </iframe>
+                        <iframe src="https://www.youtube.com/embed/VIDEO_ID_2?rel=0&modestbranding=1" frameborder="0" allowfullscreen loading="lazy"></iframe>
                     </div>
                 </div>
             </div>
 
-            <!-- Confirm checkbox -->
             <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex items-center gap-3 shadow-sm">
-                <div class="relative">
-                    <input type="checkbox" id="watched-check" onchange="handleWatchedChange()"
-                           class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer">
-                </div>
-                <label for="watched-check" class="text-sm font-semibold text-gray-700 cursor-pointer flex-1" data-i18n="VID_CONFIRM">
-                    Men videolarni ko'rib chiqdim va tayyorman ✅
-                </label>
+                <input type="checkbox" id="watched-check" onchange="handleWatchedChange()" class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary">
+                <label for="watched-check" class="text-sm font-semibold text-gray-700 flex-1" data-i18n="VID_CONFIRM">Men videolarni ko'rib chiqdim va tayyorman ✅</label>
             </div>
 
-            <!-- Ready block (reveals after checkbox) -->
             <div id="ready-block">
                 <div class="bg-primary rounded-3xl p-6 text-center shadow-xl shadow-green-900/25">
                     <div class="text-3xl mb-3">🔥</div>
                     <h4 class="font-extrabold text-lg text-white mb-2 font-headline" data-i18n="READY_TITLE">Daromad topishga tayyormisiz?</h4>
-                    <p class="text-xs text-green-200 mb-5 leading-relaxed" data-i18n="READY_SUB">Rasmiy saytda ro'yxatdan o'ting va 20% chegirmani oling. Sponsor ID so'ralganda <strong>5422685</strong> kiriting.</p>
+                    <p class="text-xs text-green-200 mb-5 leading-relaxed" data-i18n="READY_SUB"></p>
                     <button onclick="goToRegistration()" class="w-full bg-white text-primary py-4 rounded-2xl font-extrabold text-sm shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
-                        <span>🚀</span>
-                        <span data-i18n="BTN_READY">Men Tayyorman! Ro'yxatdan O'tish</span>
+                        <span>🚀</span><span data-i18n="BTN_READY">Men Tayyorman! Ro'yxatdan O'tish</span>
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- ─── PROFILE / REGISTRATION ─── -->
         <section id="page-profile" class="page px-5 pt-2">
             <h3 class="text-xl font-bold font-headline text-primary mb-1" data-i18n="REG_TITLE">A'zo Bo'lish</h3>
             <p class="text-xs text-gray-500 mb-5" data-i18n="REG_SUBTITLE">Rasmiy saytda ro'yxatdan o'ting</p>
 
-            <!-- Sponsor ID card -->
             <div class="bg-primary rounded-3xl p-5 mb-4 shadow-xl shadow-green-900/25">
                 <p class="text-xs text-green-300 font-bold uppercase tracking-widest mb-1" data-i18n="SPONSOR_LABEL">Sponsor ID Raqami</p>
                 <div class="flex items-center justify-between">
-                    <p id="profile-sponsor-id" class="text-3xl font-black text-white tracking-widest font-headline">5422685</p>
-                    <button onclick="copySponsorId()" class="bg-white/20 hover:bg-white/30 transition-colors text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 active:scale-95">
-                        <span class="material-symbols-outlined" style="font-size:15px">content_copy</span>
-                        <span data-i18n="BTN_COPY">Nusxa</span>
+                    <p id="profile-sponsor-id" class="text-3xl font-black text-white tracking-widest font-headline">L5422685</p>
+                    <button onclick="copySponsorId()" class="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 active:scale-95">
+                        <span class="material-symbols-outlined" style="font-size:15px">content_copy</span><span data-i18n="BTN_COPY">Nusxa</span>
                     </button>
-                </div>
-                <div class="mt-3 pt-3 border-t border-white/20">
-                    <p class="text-xs text-green-200" data-i18n="SPONSOR_HINT">Ro'yxatdan o'tishda "Homiy raqami" maydoniga yuqoridagi raqamni kiriting</p>
                 </div>
             </div>
 
-            <!-- Steps -->
             <div class="space-y-3 mb-5">
                 <div class="bg-white border border-gray-100 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
                     <div class="w-7 h-7 bg-emerald-100 text-primary rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5">1</div>
-                    <div>
-                        <p class="font-bold text-sm text-gray-800" data-i18n="STEP1_TITLE">Saytga o'ting</p>
-                        <p class="text-xs text-gray-500 mt-0.5" data-i18n="STEP1_DESC">ersagglobal.uz rasmiy saytini oching</p>
-                    </div>
+                    <div><p class="font-bold text-sm text-gray-800" data-i18n="STEP1_TITLE"></p><p class="text-xs text-gray-500 mt-0.5" data-i18n="STEP1_DESC"></p></div>
                 </div>
                 <div class="bg-white border border-gray-100 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
                     <div class="w-7 h-7 bg-emerald-100 text-primary rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5">2</div>
-                    <div>
-                        <p class="font-bold text-sm text-gray-800" data-i18n="STEP2_TITLE">Ro'yxatdan o'ting</p>
-                        <p class="text-xs text-gray-500 mt-0.5" data-i18n="STEP2_DESC">Shakl to'ldiring va sponsor ID ni kiriting: <strong id="step2-sponsor-id">5422685</strong></p>
-                    </div>
-                </div>
-                <div class="bg-white border border-gray-100 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-                    <div class="w-7 h-7 bg-emerald-100 text-primary rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5">3</div>
-                    <div>
-                        <p class="font-bold text-sm text-gray-800" data-i18n="STEP3_TITLE">20% chegirma oling</p>
-                        <p class="text-xs text-gray-500 mt-0.5" data-i18n="STEP3_DESC">Barcha mahsulotlarni 20% arzonroq xarid qiling!</p>
-                    </div>
+                    <div><p class="font-bold text-sm text-gray-800" data-i18n="STEP2_TITLE"></p><p class="text-xs text-gray-500 mt-0.5"><span data-i18n="STEP2_DESC"></span> <strong id="step2-sponsor-id"></strong></p></div>
                 </div>
             </div>
 
-            <button onclick="goToRegistration()" class="w-full bg-primary text-white py-4 rounded-2xl font-extrabold shadow-lg shadow-green-900/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 text-sm">
-                <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span>
-                <span data-i18n="BTN_GOTO_SITE">Rasmiy Saytga O'tish</span>
+            <button onclick="goToRegistration()" class="w-full bg-primary text-white py-4 rounded-2xl font-extrabold shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2 text-sm">
+                <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span><span data-i18n="BTN_GOTO_SITE"></span>
             </button>
-            <p class="text-center text-[10px] text-gray-400 mt-3" data-i18n="REG_FREE">Ro'yxatdan o'tish mutlaqo bepul 🎉</p>
         </section>
 
-        <!-- ─── DASHBOARD / LEAD DAM ─── -->
         <section id="page-dashboard" class="page px-5 pt-2">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-bold font-headline text-primary">Lead Dam 🔒</h3>
-                <button onclick="loadDashboard()" class="text-xs text-primary font-bold border border-primary px-3 py-1 rounded-full active:scale-95 transition-transform">↻ Yangilash</button>
+                <button onclick="loadDashboard()" class="text-xs text-primary font-bold border border-primary px-3 py-1 rounded-full">Yangilash</button>
             </div>
-
-            <!-- Token usage bar -->
-            <div id="token-status" class="bg-white border border-gray-100 rounded-2xl p-4 mb-4 shadow-sm">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold text-gray-600">Bugungi AI token</span>
-                    <span id="token-count-text" class="text-xs font-bold text-primary">—</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-2">
-                    <div id="token-bar" class="bg-primary h-2 rounded-full transition-all" style="width:0%"></div>
-                </div>
-            </div>
-
-            <!-- Pending leads list -->
-            <div id="leads-container">
-                <div class="text-center py-10 text-gray-400 text-sm">Yuklanmoqda...</div>
-            </div>
-
-            <!-- Unlock button -->
+            <div id="leads-container" class="space-y-3"></div>
             <div id="unlock-section" class="hidden mt-4">
-                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">
-                    <p class="text-xs text-amber-700 font-semibold text-center">🔒 Qulfli mijozlar to'lov qilinganidan keyin ochiladi</p>
-                </div>
-                <button onclick="openPaymentModal()" class="w-full bg-primary text-white py-4 rounded-2xl font-extrabold shadow-lg shadow-green-900/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 text-sm">
-                    <span class="material-symbols-outlined" style="font-size:18px">lock_open</span>
-                    Mijozlarni Ochish — To'lov Qilish
+                <button onclick="openPaymentModal()" class="w-full bg-primary text-white py-4 rounded-2xl font-extrabold shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <span class="material-symbols-outlined" style="font-size:18px">lock_open</span>Mijozlarni Ochish
                 </button>
             </div>
-
-            <!-- No leads state -->
             <div id="no-leads-state" class="hidden text-center py-12">
                 <div class="text-4xl mb-3">🎉</div>
-                <p class="text-sm font-bold text-gray-700 mb-1">Barcha mijozlar yuborildi!</p>
-                <p class="text-xs text-gray-400">Yangi mijozlar kelsa, bu yerda ko'rinadi.</p>
+                <p class="text-sm font-bold text-gray-700">Barcha mijozlar yuborildi!</p>
             </div>
         </section>
-
-        <script src="script.js"></script>
     </main>
+
+    <div id="payment-overlay" class="modal-overlay closed fixed inset-0 bg-black/50 z-[120] flex items-center justify-center px-5">
+        <div id="payment-sheet" class="modal-sheet closed bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-5"><h4 class="font-extrabold text-lg text-primary">To'lov</h4><button onclick="closePaymentModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button></div>
+            <div class="bg-emerald-50 rounded-2xl p-4 mb-3 text-center"><a id="paynet-link" href="#" target="_blank" class="block bg-primary text-white py-3 rounded-xl font-bold text-sm">Paynet orqali to'lash</a></div>
+            <div class="bg-blue-50 rounded-2xl p-4 mb-4 text-center"><p id="card-display" class="font-mono font-bold text-sm tracking-wider">8600 0000 0000 0000</p><button onclick="copyCard()" class="text-primary text-xs font-bold mt-2">Nusxa olish</button></div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay closed fixed inset-0 bg-black/50 z-[100] flex items-end justify-center">
+        <div id="modal-sheet" class="modal-sheet closed bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-center pt-3 pb-1"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+            <div class="flex justify-between items-start px-5 pt-2 pb-3 border-b border-gray-50">
+                <div class="flex-1"><h3 id="modal-title" class="font-extrabold text-base text-primary font-headline"></h3><p id="modal-code" class="text-[10px] text-gray-400 mt-1"></p></div>
+                <button onclick="closeModal()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-5 pb-4">
+                <img id="modal-img" class="w-full aspect-square object-cover rounded-2xl mt-4 mb-4 bg-gray-50 border border-gray-100">
+                <div class="flex items-center justify-between mb-4"><p id="modal-price" class="text-2xl font-extrabold text-primary"></p><span class="bg-emerald-100 text-primary text-[10px] font-bold px-3 py-1 rounded-full">Organik</span></div>
+                <div class="space-y-4 text-sm text-gray-600">
+                    <div><p class="text-[9px] font-black text-primary uppercase mb-2" data-i18n="MODAL_DESC_LABEL"></p><p id="modal-desc"></p></div>
+                    <div id="modal-usage-wrap"><p class="text-[9px] font-black text-primary uppercase mb-2" data-i18n="MODAL_USAGE_LABEL"></p><p id="modal-usage"></p></div>
+                </div>
+            </div>
+            <div class="px-5 pt-3 pb-5 border-t border-gray-50"><button onclick="onBuyClick()" class="w-full bg-primary text-white py-4 rounded-2xl font-extrabold flex items-center justify-center gap-2"><span data-i18n="BTN_BUY"></span></button></div>
+        </div>
+    </div>
+
+    <div id="discount-overlay" class="modal-overlay closed fixed inset-0 bg-black/50 z-[110] flex items-center justify-center px-5">
+        <div id="discount-sheet" class="modal-sheet closed bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <div class="text-center mb-5"><div class="text-4xl mb-3">🎁</div><h4 class="font-extrabold text-lg text-primary" data-i18n="DISC_TITLE"></h4><p class="text-sm text-gray-500" data-i18n="DISC_DESC"></p></div>
+            <div class="bg-surface rounded-2xl p-3 mb-5 text-center"><p class="text-[10px] text-gray-400 uppercase font-bold" data-i18n="DISC_SPONSOR"></p><p id="disc-modal-sponsor-id" class="text-xl font-black text-primary font-mono"></p></div>
+            <button onclick="goToRegistration(); closeDiscountModal();" class="w-full bg-primary text-white py-3.5 rounded-2xl font-bold text-sm mb-2" data-i18n="DISC_YES"></button>
+            <button onclick="closeDiscountModal()" class="w-full text-gray-400 text-sm font-medium py-2" data-i18n="DISC_NO"></button>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 z-50">
+        <div class="flex justify-around items-center py-2">
+            <button onclick="showPage('home')" id="nav-home" class="nav-btn active flex flex-col items-center py-1 px-3">
+                <span class="material-symbols-outlined">home</span><span class="text-[9px] font-bold mt-0.5" data-i18n="NAV_HOME"></span><div class="nav-dot"></div>
+            </button>
+            <button onclick="showPage('shop')" id="nav-shop" class="nav-btn inactive flex flex-col items-center py-1 px-3">
+                <span class="material-symbols-outlined">grid_view</span><span class="text-[9px] font-bold mt-0.5" data-i18n="NAV_SHOP"></span><div class="nav-dot"></div>
+            </button>
+            <button onclick="showPage('lessons')" id="nav-lessons" class="nav-btn inactive flex flex-col items-center py-1 px-3">
+                <span class="material-symbols-outlined">school</span><span class="text-[9px] font-bold mt-0.5" data-i18n="NAV_LEARN"></span><div class="nav-dot"></div>
+            </button>
+            <button onclick="showPage('profile')" id="nav-profile" class="nav-btn inactive flex flex-col items-center py-1 px-3">
+                <span class="material-symbols-outlined">person_add</span><span class="text-[9px] font-bold mt-0.5" data-i18n="NAV_JOIN"></span><div class="nav-dot"></div>
+            </button>
+            <button onclick="showPage('dashboard')" id="nav-dashboard" class="nav-btn inactive flex flex-col items-center py-1 px-3">
+                <span class="material-symbols-outlined">dashboard</span><span class="text-[9px] font-bold mt-0.5">CRM</span><div class="nav-dot"></div>
+            </button>
+        </div>
+    </nav>
+
+    <div id="toast"></div>
+
+    <script>
+        // --- CONFIG ---
+        const CATALOG_API       = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/getCatalog";
+        const LEADER_CONFIG_API = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/getLeaderConfig";
+        const PENDING_LEADS_API = "https://us-central1-ersag-ai-bot.cloudfunctions.net/api/leads";
+        const DEFAULT_SPONSOR   = "L5422685";
+        const PAYNET_URL        = "https://paynet.uz/paying/ersag_bot"; 
+        const CARD_NUM          = "8600 1234 5678 9012"; 
+        const ADMIN_SECRET_KEY  = "SUPER_SECRET_123";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const SPONSOR_PARAM = (urlParams.get('sponsor') || DEFAULT_SPONSOR).trim();
+
+        let SPONSOR_ID = DEFAULT_SPONSOR;
+        let REG_URL = 'https://www.ersagglobal.uz/account.asp?mod=myaccount&sub=edit&action=register&p=1&red=&sponsor=' + SPONSOR_ID;
+
+        // --- STATE ---
+        let currentLang = 'uz';
+        let globalProducts = [];
+        let productsLoaded = false;
+        let activeFilter = 'all';
+
+        const T = {
+            uz: {
+                NAV_HOME: "Asosiy", NAV_SHOP: "Katalog", NAV_LEARN: "Darslar", NAV_JOIN: "A'zo",
+                TOP_TAG: "Tabiiy Go'zallik", HERO_TITLE: "Tabiat bilan Uyg'unlik", HERO_SUB: "Sog'ligingiz va tabiat uchun eng sara organik mahsulotlar.",
+                BTN_CATALOG: "Katalogni ko'rish", BTN_READY: "Tayyorman! Ro'yxatdan o'tish", BTN_COPY: "Nusxa", BTN_GOTO_SITE: "Saytga o'tish", BTN_BUY: "20% chegirma bilan sotib olish", BTN_RETRY: "Qayta urinish",
+                FEAT_ORGANIC: "100% Organik", FEAT_HALAL: "Halal", FEAT_DISCOUNT: "20% chegirma",
+                LESSONS_TITLE: "Biznes Maktabi", LESSONS_SUB: "Videoni ko'ring va jamoamizga qo'shiling", VID_CONFIRM: "Men tayyorman ✅", READY_TITLE: "Tayyormisiz?",
+                REG_TITLE: "A'zo Bo'lish", REG_SUBTITLE: "Ro'yxatdan o'ting", SPONSOR_LABEL: "Sponsor ID", SPONSOR_HINT: "Sponsor ID ni kiriting",
+                STEP1_TITLE: "Saytga o'ting", STEP1_DESC: "ersagglobal.uz ga kiring", STEP2_TITLE: "Sponsor ID", STEP2_DESC: "ID ni kiriting:",
+                MODAL_DESC_LABEL: "Tavsifi", MODAL_USAGE_LABEL: "Qo'llanilishi", SHOP_TITLE: "Katalog", DISC_TITLE: "20% Chegirma", DISC_DESC: "Ro'yxatdan o'ting va arzonroq oling!",
+                DISC_SPONSOR: "Sponsor ID:", DISC_YES: "Ha, olaman! 🚀", DISC_NO: "Keyinroq", SEARCH_PLACEHOLDER: "Mahsulot qidirish...", TOAST_COPIED: "Nusxa olindi! ✓"
+            },
+            ru: {
+                NAV_HOME: "Главная", NAV_SHOP: "Каталог", NAV_LEARN: "Уроки", NAV_JOIN: "Вступить",
+                TOP_TAG: "Красота", HERO_TITLE: "Гармония с природой", HERO_SUB: "Органические продукты для вашего здоровья.",
+                BTN_CATALOG: "Смотреть каталог", BTN_READY: "Я готов! Регистрация", BTN_COPY: "Копировать", BTN_GOTO_SITE: "На сайт", BTN_BUY: "Купить со скидкой 20%", BTN_RETRY: "Повторить",
+                FEAT_ORGANIC: "100% Органик", FEAT_HALAL: "Халяль", FEAT_DISCOUNT: "Скидка 20%",
+                LESSONS_TITLE: "Бизнес Школа", LESSONS_SUB: "Смотрите видео и присоединяйтесь", VID_CONFIRM: "Я посмотрел ✅", READY_TITLE: "Готовы?",
+                REG_TITLE: "Вступить", REG_SUBTITLE: "Зарегистрируйтесь", SPONSOR_LABEL: "ID Спонсора", SPONSOR_HINT: "Введите номер спонсора",
+                STEP1_TITLE: "Перейдите на сайт", STEP1_DESC: "Откройте ersagglobal.uz", STEP2_TITLE: "ID Спонсора", STEP2_DESC: "Введите ID:",
+                MODAL_DESC_LABEL: "Описание", MODAL_USAGE_LABEL: "Применение", SHOP_TITLE: "Каталог", DISC_TITLE: "Скидка 20%", DISC_DESC: "Получите скидку при регистрации!",
+                DISC_SPONSOR: "ID Спонсора:", DISC_YES: "Да, хочу! 🚀", DISC_NO: "Позже", SEARCH_PLACEHOLDER: "Поиск товара...", TOAST_COPIED: "Скопировано! ✓"
+            }
+        };
+
+        const pageNavMap = { home: 'nav-home', shop: 'nav-shop', lessons: 'nav-lessons', profile: 'nav-profile', dashboard: 'nav-dashboard' };
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('page-active'));
+            document.getElementById('page-' + pageId).classList.add('page-active');
+            Object.entries(pageNavMap).forEach(([p, id]) => {
+                const btn = document.getElementById(id);
+                btn.classList.toggle('active', p === pageId);
+                btn.classList.toggle('inactive', p !== pageId);
+            });
+            window.scrollTo({top:0});
+            if (pageId === 'shop' && !productsLoaded) loadProducts();
+            if (pageId === 'dashboard') loadDashboard();
+        }
+        const CATS = [
+    {key: "Sog\u2019liq", uz: "Sog'liq", ru: "Здоровье"},
+    {key: "Go\u2019zallik", uz: "Go'zallik", ru: "Красота"},
+    {key: "Uy tozalash", uz: "Tozalash", ru: "Уборка"},
+    // ADD NEW ONES HERE:
+    {key: "Parfüm", uz: "Parfüm", ru: "Парфюмерия"},
+    {key: "Kosmetika", uz: "Kosmetika", ru: "Косметика"}
+];
+
+       // --- DASHBOARD ---
+async function loadDashboard() {
+    const secret = urlParams.get('secret') || ADMIN_SECRET_KEY;
+    const container = document.getElementById('leads-container');
+    const noLeads = document.getElementById('no-leads-state');
+    const unlockSec = document.getElementById('unlock-section');
+
+    container.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Yuklanmoqda...</div>';
+    noLeads.classList.add('hidden'); 
+    unlockSec.classList.add('hidden');
+
+    try {
+        const res = await fetch(`${PENDING_LEADS_API}?leader_id=${SPONSOR_PARAM}&admin_secret=${secret}`);
+        if (res.status === 403) { 
+            container.innerHTML = '<p class="text-center text-red-400">Ruxsat yo\'q.</p>'; 
+            return; 
+        }
+        
+        const data = await res.json();
+        const leads = data.leads || [];
+
+        if (leads.length === 0) {
+            container.innerHTML = '';
+            noLeads.classList.remove('hidden');
+            return;
+        }
+
+        // Show the Unlock/Pay section ONLY if subscription is not active
+        if (!data.subscription_active) {
+            unlockSec.classList.remove('hidden');
+        }
+
+        container.innerHTML = '<div class="space-y-3">' +
+            leads.map(function(lead) {
+                // If lead is unlocked, show full phone. If not, hide last 4 digits.
+                const displayPhone = lead.is_unlocked ? lead.phone : lead.phone.replace(/(\d{4})$/, "****");
+                const statusLabel = lead.is_unlocked ? "OCHIQ" : "QULFLANGAN";
+                const statusClass = lead.is_unlocked ? "bg-emerald-50 text-primary" : "bg-amber-50 text-amber-600";
+
+                return `
+                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary" style="font-size:20px">person</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-sm text-gray-800 truncate">${lead.name}</p>
+                        <p class="text-xs text-gray-400 font-mono">${displayPhone}</p>
+                    </div>
+                    <span class="text-[9px] font-bold ${statusClass} px-2 py-1 rounded-full">${statusLabel}</span>
+                </div>`;
+            }).join('') + '</div>';
+
+    } catch (e) {
+        console.error('Dashboard error:', e);
+        container.innerHTML = '<p class="text-center text-red-400">Xatolik yuz berdi.</p>';
+    }
+}
+
+function openPaymentModal() { 
+    document.getElementById('payment-overlay').classList.replace('closed', 'open');
+    document.getElementById('payment-sheet').classList.replace('closed', 'open');
+}
+
+function closePaymentModal() { 
+    document.getElementById('payment-sheet').classList.replace('open', 'closed');
+    document.getElementById('payment-overlay').classList.replace('open', 'closed');
+}
+
+        // --- SEARCH ---
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const grid = document.getElementById('product-grid');
+            if (!term) { renderProducts(); return; }
+
+            const filtered = globalProducts.filter(p => 
+                (p.name_uz || '').toLowerCase().includes(term) || (p.name_ru || '').toLowerCase().includes(term)
+            );
+
+            if (filtered.length === 0) { grid.innerHTML = '<p class="text-center py-10">Hech narsa topilmadi.</p>'; return; }
+            grid.innerHTML = '<div class="grid grid-cols-2 gap-3">' + filtered.map(p => {
+                const idx = globalProducts.indexOf(p);
+                const name = currentLang === 'ru' ? (p.name_ru || p.name_uz) : (p.name_uz || p.name_ru);
+                return `
+                    <div onclick="openModal(${idx})" class="product-card bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer flex flex-col">
+                        <div class="aspect-square bg-gray-50 overflow-hidden"><img src="${p.image}" class="w-full h-full object-cover"></div>
+                        <div class="p-3">
+                            <h4 class="font-bold text-[11px] text-gray-800 line-clamp-2">${name}</h4>
+                            <p class="text-primary font-extrabold text-xs mt-1">${p.price} UZS</p>
+                        </div>
+                    </div>`;
+            }).join('') + '</div>';
+        });
+
+        // --- CATALOG ---
+        function cleanCatStr(str) { return (str || '').trim().replace(/['\u2018\u2019\u02BB\u0060\u00B4\s]/g, '').toLowerCase(); }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch(CATALOG_API);
+                globalProducts = await res.json();
+                productsLoaded = true;
+                renderProducts();
+            } catch (e) { document.getElementById('load-error').classList.remove('hidden'); }
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            const isRu = currentLang === 'ru';
+            grid.innerHTML = '';
+
+           const CATS = [
+    {key: "Sog’liq", uz: "Sog'liq", ru: "Здоровье"},
+    {key: "Go’zallik", uz: "Go'zallik", ru: "Красота"},
+    {key: "Uy tozalash", uz: "Tozalash", ru: "Уборка"},
+    {key: "Parfüm", uz: "Parfüm", ru: "Парфюмерия"},
+    {key: "Kosmetika", uz: "Kosmetika", ru: "Косметика"}
+];
+
+            CATS.forEach(c => {
+                const prods = globalProducts.filter(p => cleanCatStr(p.category) === cleanCatStr(c.key));
+                if (prods.length === 0) return;
+                let html = `<div class="mt-6 mb-3 flex items-center gap-3"><h4 class="text-base font-extrabold text-primary">${isRu ? c.ru : c.uz}</h4><div class="h-px bg-gray-200 flex-1"></div></div><div class="grid grid-cols-2 gap-3">`;
+                html += prods.map(p => {
+                    const idx = globalProducts.indexOf(p);
+                    const name = isRu ? (p.name_ru || p.name_uz) : (p.name_uz || p.name_ru);
+                    return `<div onclick="openModal(${idx})" class="product-card bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer flex flex-col">
+                        <div class="aspect-square bg-gray-50"><img src="${p.image}" class="w-full h-full object-cover"></div>
+                        <div class="p-3"><h4 class="font-bold text-[11px] text-gray-800 line-clamp-2">${name}</h4><p class="text-primary font-extrabold text-xs mt-1">${p.price} UZS</p></div>
+                    </div>`;
+                }).join('') + '</div>';
+                grid.innerHTML += html;
+            });
+        }
+
+        function openModal(idx) {
+            const p = globalProducts[idx];
+            const isRu = currentLang === 'ru';
+            document.getElementById('modal-title').textContent = isRu ? (p.name_ru || p.name_uz) : (p.name_uz || p.name_ru);
+            document.getElementById('modal-price').textContent = p.price + ' UZS';
+            document.getElementById('modal-desc').textContent = isRu ? (p.desc_ru || p.desc_uz) : (p.desc_uz || p.desc_ru);
+            document.getElementById('modal-usage').textContent = isRu ? (p.usage_ru || p.usage_uz) : (p.usage_uz || p.usage_ru);
+            document.getElementById('modal-img').src = p.image;
+            document.getElementById('modal-overlay').classList.replace('closed', 'open');
+            document.getElementById('modal-sheet').classList.replace('closed', 'open');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-sheet').classList.replace('open', 'closed');
+            document.getElementById('modal-overlay').classList.replace('open', 'closed');
+        }
+
+        function switchLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = T[lang][el.dataset.i18n] || el.textContent);
+            document.getElementById('searchInput').placeholder = T[lang].SEARCH_PLACEHOLDER;
+            if (productsLoaded) renderProducts();
+        }
+
+        async function loadLeaderConfig() {
+    try {
+        const res = await fetch(`${LEADER_CONFIG_API}?sponsor=${SPONSOR_PARAM}`);
+        const cfg = await res.json();
+        
+        if (cfg && cfg.sponsor_id) {
+            // Remove 'L' if it exists to ensure Ersag site accepts the ID
+            let cleanId = cfg.sponsor_id.toString().replace(/\D/g, ''); 
+            SPONSOR_ID = cleanId; 
+            
+            // Rebuild the link dynamically
+            REG_URL = 'https://www.ersagglobal.uz/account.asp?mod=myaccount&sub=edit&action=register&p=1&red=&sponsor=' + encodeURIComponent(SPONSOR_ID);
+            
+            // Update all ID displays on the screen
+            document.getElementById('profile-sponsor-id').textContent = SPONSOR_ID;
+            document.getElementById('step2-sponsor-id').textContent = SPONSOR_ID;
+            document.getElementById('disc-modal-sponsor-id').textContent = SPONSOR_ID;
+        }
+    } catch (e) {
+        console.error('loadLeaderConfig failed:', e.message);
+    }
+}
+
+        function handleWatchedChange() {
+            if (document.getElementById('watched-check').checked) document.getElementById('ready-block').classList.add('visible');
+            else document.getElementById('ready-block').classList.remove('visible');
+        }
+
+        function goToRegistration() { window.open(`https://www.ersagglobal.uz/account.asp?mod=myaccount&sub=edit&action=register&p=1&red=&sponsor=${SPONSOR_ID}`, '_blank'); }
+        function copySponsorId() { navigator.clipboard.writeText(SPONSOR_ID); showToast(T[currentLang].TOAST_COPIED); }
+        function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            switchLang('uz');
+            await loadLeaderConfig();
+        });
+    </script>
 </body>
 </html>
