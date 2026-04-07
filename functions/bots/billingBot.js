@@ -5,9 +5,9 @@ const subscriptionService = require('../services/subscriptionService');
 const env = require('../config/env');
 const crypto = require('crypto');
 
-const run = async (update, botToken) => {
+const handleUpdate = async (body, botDoc, botToken) => {
     logger.info('Running billingBot features');
-    const message = update.message;
+    const message = body.message;
     
     if (!message && update.callback_query) {
         const chatId = update.callback_query.message.chat.id;
@@ -144,5 +144,5 @@ const sendBillingMenu = async (botToken, chatId) => {
     );
 };
 
-module.exports = { run, receiveScreenshot, approvePayment, sendBillingMenu };
+module.exports = { handleUpdate, receiveScreenshot, approvePayment, sendBillingMenu };
 
