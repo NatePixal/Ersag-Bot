@@ -5,6 +5,7 @@ const cors = require('cors');
 
 // 1. Core Logic Imports
 const { handleTelegramUpdate } = require('./gateway/telegramGateway');
+const { handleLeaderHubUpdate } = require('./gateway/leaderHubGateway');
 const { syncProductsFromSheets } = require('./services/sheetsService');
 const miniAppRoutes = require('./miniapp/api');
 const env = require('./config/env');
@@ -12,7 +13,8 @@ const env = require('./config/env');
 // 2. Setup Express Apps
 const botApp = express();
 botApp.use(express.json());
-botApp.post('/:botToken', handleTelegramUpdate);
+botApp.post('/bot/:botToken', handleTelegramUpdate);
+botApp.post('/leader-hub/:botToken', handleLeaderHubUpdate);
 
 const apiApp = express();
 apiApp.use(cors({ origin: true }));

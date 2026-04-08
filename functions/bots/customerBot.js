@@ -1,7 +1,7 @@
 // functions/bots/customerBot.js
 const aiService = require('../agents/aiService');
 const telegramApi = require('../utils/telegramApi');
-const { db } = require('../config/db');
+const { db, admin } = require('../config/db');
 
 async function handleUpdate(update, botToken, ownerId) {
     const message = update.message;
