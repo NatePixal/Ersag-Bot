@@ -1,52 +1,93 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const express = require('express');
-const cors = require('cors');
+const express = require("express");
+const cors = require("cors");
 
-// 1. Core Logic Imports
-const { handleTelegramUpdate } = require('./gateway/telegramGateway');
-const { handleLeaderHubUpdate } = require('./gateway/leaderHubGateway');
-const { syncProductsFromSheets } = require('./services/sheetsService');
-const miniAppRoutes = require('./miniapp/api');
-const env = require('./config/env');
+/* ===============================
+   1. ENV INITIALIZATION (FIRST)
+================================ */
+const env = require("./config/env");
+env.initEnv();
 
-// 2. Setup Express Apps
+/* ===============================
+   2. IMPORT GATEWAYS
+================================ */
+const { handleTelegramUpdate } = require("./gateway/telegramGateway");
+const { handleLeaderHubUpdate } = require("./gateway/leaderHubGateway");
+const { handleBillingUpdate } = require("./gateway/billingGateway");
+
+/* ===============================
+   3. SERVICES
+================================ */
+const { syncProductsFromSheets } = require("./services/sheetsService");
+
+/* ===============================
+   4. MINI APP ROUTES
+================================ */
+const miniAppRoutes = require("./miniapp/api");
+
+/* ===============================
+   5. BOT EXPRESS APP
+================================ */
 const botApp = express();
 botApp.use(express.json());
-botApp.post('/bot/:botToken', handleTelegramUpdate);
-botApp.post('/leader-hub/:botToken', handleLeaderHubUpdate);
 
+botApp.post("/bot/:botToken", handleTelegramUpdate);
+botApp.post("/leader-hub/:botToken", handleLeaderHubUpdate);
+botApp.post("/billing/:botToken", handleBillingUpdate);
+
+/* ===============================
+   6. API EXPRESS APP
+================================ */
 const apiApp = express();
 apiApp.use(cors({ origin: true }));
 apiApp.use(express.json());
-apiApp.use('/', miniAppRoutes);
+apiApp.use("/", miniAppRoutes);
 
-// 3. EXPORTS (These define what appears in your Google Cloud Console)
+/* ===============================
+   7. SHARED SECRETS
+================================ */
+const secretList = [
+  "GROQ_API_KEY",
+  "MASTER_BOT_TOKEN",
+  "ADMIN_TELEGRAM_ID"
+];
 
-// The Bots
-exports.botGateway = onRequest({ 
-    secrets: ["GROQ_API_KEY", "MASTER_BOT_TOKEN", "ADMIN_TELEGRAM_ID"] 
-}, botApp);
+/* ===============================
+   8. EXPORT FUNCTIONS
+================================ */
+exports.botGateway = onRequest(
+  { secrets: secretList, region: "us-central1" },
+  botApp
+);
 
-// The Mini App
-exports.api = onRequest({ 
-    secrets: ["GROQ_API_KEY", "MASTER_BOT_TOKEN", "ADMIN_TELEGRAM_ID"] 
-}, apiApp);
+exports.api = onRequest(
+  { secrets: secretList, region: "us-central1" },
+  apiApp
+);
 
-// The Jobs (Importing them directly to ensure they are seen)
-const { checkSubscriptions } = require('./jobs/subscriptionJob');
-const { resetQuotas } = require('./jobs/resetQuotaJob');
+/* ===============================
+   9. BACKGROUND JOBS
+================================ */
+const { checkSubscriptions } = require("./jobs/subscriptionJob");
+const { resetQuotas } = require("./jobs/resetQuotaJob");
 
 exports.checkSubscriptions = checkSubscriptions;
 exports.resetQuotas = resetQuotas;
 
-// The Manual Sync
-exports.manualSync = onSchedule("0 4 * * *", async (event) => {
-    console.log("Manual Sync Triggered");
-    try {
-        await syncProductsFromSheets(env.GOOGLE_SHEETS_ID);
-        console.log("Sync Successful");
-    } catch (error) {
-        console.error("Sync Failed:", error);
-    }
+exports.manualSync = onSchedule("0 4 * * *", async () => {
+  console.log("Starting Scheduled Sync...");
+
+  try {
+    await syncProductsFromSheets(env.GOOGLE_SHEETS_ID);
+    console.log("Sync Successful!");
+  } catch (error) {
+    console.error("Sync Failed:", error);
+  }
 });
+
+/* ===============================
+   10. GLOBAL ERROR VISIBILITY
+================================ */
+process.on("unhandledRejection", console.error);
+process.on("uncaughtException", console.error);
